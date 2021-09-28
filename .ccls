@@ -1,0 +1,4 @@
+clang++
+%h %cpp -std=c++17 
+-Wall
+-Wno-c++17-extensions
