@@ -15,6 +15,7 @@
 
 (define MTS (empty-scene WIDTH HEIGHT))
 
+;; !!!
 (define SAIKI_IMG)
 
 ;; ===============
