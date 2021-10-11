@@ -16,7 +16,7 @@
 
 (define MTS (rectangle WIDTH HEIGHT "solid" "white"))
 
-(define POKEBALL)
+(define POKEBALL .)
 
 ;; ==========
 ;; Data Definitions:
@@ -53,27 +53,27 @@
 
 ;; PokeBall -> PokeBall
 ;; advance pokeball by LINEAR-SPEED and ANGULAR-SPEED
-(check-expect (next_pokeball (make-pokeball 1 12)
-                             (make-pokeball (+ 1 LINEAR-SPEED) (- 12 ANGULAR-SPEED))))
+(check-expect (next_pokeball (make-pokeball 1 12))
+                             (make-pokeball (+ 1 LINEAR-SPEED) (- 12 ANGULAR-SPEED)))
 
 ; (define (next_pokeball pb) pb)      ; stub
 ; <template from pokeball state>
 
 (define (next_pokeball pb)
   (make-pokeball (+ (pokeball-x pb) LINEAR-SPEED)
-                 (+ (pokeball-rotation pb) ANGULAR-SPEED)))
+                 (- (pokeball-rotation pb) ANGULAR-SPEED)))
 
 ;; PokeBall -> Image
 ;; produces the pokeball at height pokeball-x rotated (remainder pokeball-rotation 360) on MTS
 (check-expect (render_pokeball (make-pokeball 1 12))
-              (place-image (rotate 12 WATER-BALLOON)
+              (place-image (rotate 12 POKEBALL)
                            1
-                           CTR-Y
+                           CENTER_Y
                            MTS))
 (check-expect (render_pokeball (make-pokeball 10 361))
-              (place-image (rotate 1 WATER-BALLOON)
+              (place-image (rotate 1 POKEBALL)
                            10
-                           CTR-Y
+                           CENTER_Y
                            MTS))
 
 ; (define (render_pokeball pb) MTS)
@@ -97,3 +97,4 @@
 (define (reset_pokeball pb key)
   (cond [(key=? " " key) (make-pokeball 0 0)]
         [else pb]))
+
