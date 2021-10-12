@@ -58,7 +58,6 @@
 
 ;; PokeBallState -> PokeBallState
 ;; advances the next pokeball state by adding X_SPEED to (PokeBallState-x)
-;; !!! - add rotation
 (check-expect (next_pbs (make-PokeBallState 1 60 100))
               (make-PokeBallState 1 
                                   (+ 60 X_SPEED)
@@ -97,7 +96,6 @@
 
 ;; PokeBallState -> Image
 ;; render the current state and produce an image at the (PokeBallState-x)
-;; !!! - add rotation
 (check-expect (render_pb PokeBallState1) (place-image (rotate (PokeBallState-ro PokeBallState1) POKEBALL) 100 CENTER_Y MTS))
 
 ;(define (render_pb pbs) MTS) ; stub
@@ -111,7 +109,6 @@
 
 ;; PokeBallState Integer Integer MouseEvent-> PokeBallState
 ;; change PokeBallState dir when mouse is clicked 
-;; !!! - add rotation
 (check-expect (change_dir PokeBallState1 0 0 "button-down") (make-PokeBallState -1 100 (/ 100 X_PER_DEGREE)))
 (check-expect (change_dir PokeBallState2 10 20 "button-down") (make-PokeBallState 1 100 (/ 100 X_PER_DEGREE)))
 
