@@ -1,0 +1,12 @@
+#Space invaders Design Analysis
+
+Constants:
+
+Width
+Height
+
+user rocket
+position of rocket << bottom
+X speed when arrow keys are pressed
+
+
