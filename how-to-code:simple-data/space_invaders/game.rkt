@@ -1,8 +1,7 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname game) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require 2htdp/image)
 (require 2htdp/universe)
+;; Add spaceship X position tick
+;; Add enemies
 
 ;; ===========
 ;; Constants:
@@ -60,20 +59,22 @@
 ;; - reference: (first lob) is Bullet
 ;; - self-reference: (rest lob) is ListOfBullet
 
-(define-struct spaceship (x bullets))
+(define-struct spaceship (x dir bullets))
 ;; Spaceship is (make-spaceship Natural ListOfBullet)
 ;; interp. a spaceship at screen coordinate x
+;;          dir is the direction of spaceship
 ;;          bullets is ListOfBullet that is fired by the spaceship
-(define SS0 (make-spaceship CENTER_X empty))
-(define SS1 (make-spaceship CENTER_X (cons B0 empty)))
+(define SS0 (make-spaceship CENTER_X 1 empty))
+(define SS1 (make-spaceship CENTER_X -1 (cons B0 empty)))
 
 #;
 (define (fn-for-spaceship ss)
   (... (spaceship-x ss)                 ; Natural
+       (spaceship-dir ss)               ; Integer
        (spaceship-bullets ss)))         ; ListOfBullet
 
 ;; Template rules used: 
-;; - compound: 2 fields
+;; - compound: 3 fields
 
 ;;(define-struct enemy)
 ;; !!! create compound enemy and ListOfEnemy
@@ -101,31 +102,80 @@
 ;; start game with (main G0)
 ;; !!! Create handlers
 (define (main g)
-  (big-bang g                           ; SpaceInvaders
+  (big-bang g                                   ; SpaceInvaders
             (state true)
-            (on-tick    advance_handler)            ; SpaceInvaders -> SpaceInvaders
-            (to-draw    render)            ; SpaceInvaders -> Image
-            ;(stop-when  ...)              ; SpaceInvaders -> Boolean
-            (on-key     handle_key)))          ; SpaceInvaders KeyEvent -> SpaceInvaders
+            (on-tick    advance_handler)        ; SpaceInvaders -> SpaceInvaders
+            (to-draw    render)                 ; SpaceInvaders -> Image
+            ;(stop-when  ...)                   ; SpaceInvaders -> Boolean
+            (on-key     handle_key)))           ; SpaceInvaders KeyEvent -> SpaceInvaders
 
 ;; SpaceInvaders -> SpaceInvaders
-;!!! NO DELETE FIRST, CHANGE NAME LATER PARA DI MALITO
 ;; advance bullets of the list from spawn to BULLET_END by BULLET_SPEED
-(check-expect (advance_handler G0) G0)
+(check-expect (advance_handler G0) (make-game (make-spaceship (+ CENTER_X SPACESHIP_SPEED_X) 1 empty) empty))
 (check-expect (advance_handler G1) (make-game 
                                      (make-spaceship 
-                                       CENTER_X 
-                                       (cons (make-bullet 100 (- BULLET_FIRE_POS_Y BULLET_SPEED)) empty))
+                                       (- CENTER_X SPACESHIP_SPEED_X) 
+                                       -1 
+                                       (cons (make-bullet 100 (- BULLET_FIRE_POS_Y BULLET_SPEED)) empty)) 
                                      empty))
 
 ;(define (advance_handler g) g)       ; stub
 ; <template from SpaceInvaders>
 
-(define (advance_handler g) 
-  (make-game 
-    (make-spaceship (get_spaceship_pos g) 
-                    (advance_bullets (spaceship-bullets (game-spaceship g))))
-    empty))
+;; !!! make advance enemies
+;(define (advance_handler g)
+;  (make-game (advance_spaceship (game-spaceship g)) 
+;             (advance_enemies (game-enemies g))))               
+
+(define (advance_handler g)
+  (make-game (advance_spaceship (game-spaceship g)) 
+             empty))               
+
+
+;; Spaceship -> Spaceship
+; !!! Spaceship on tick and advance bullets
+;; instead of in the keyboard handler that can go to direction change it into advance handler
+;; move spaceship to its direction by by SPACESHIP_SPEED_X
+;; and advance the bullets
+(check-expect (advance_spaceship SS0) (make-spaceship (+ CENTER_X (* (spaceship-dir SS0) SPACESHIP_SPEED_X)) 1 empty))
+(check-expect (advance_spaceship SS1) (make-spaceship 
+                                        (+ CENTER_X (* (spaceship-dir SS1) SPACESHIP_SPEED_X)) 
+                                        -1 
+                                        (cons (make-bullet 100 (- BULLET_FIRE_POS_Y BULLET_SPEED)) empty)))
+
+;(define (advance_spaceship ss) ss)      ; stub
+; <template from SPACESHIP>
+
+(define (advance_spaceship ss)
+  (make-spaceship (advance_spaceship_position (spaceship-x ss) (spaceship-dir ss))                 
+                  (update_spaceship_dir (spaceship-x ss) (spaceship-dir ss))              
+                  (advance_bullets (spaceship-bullets ss))))       
+
+;; (spaceship-x)::Natural (spaceship-dir)::Integer -> Natural
+;; produce a new x coordinate according to its current position and direction
+(check-expect (advance_spaceship_position (spaceship-x SS0) (spaceship-dir SS0)) 
+              (+ (spaceship-x SS0) (* (spaceship-dir SS0) SPACESHIP_SPEED_X)))
+(check-expect (advance_spaceship_position (spaceship-x SS1) (spaceship-dir SS1)) 
+              (+ (spaceship-x SS1) (* (spaceship-dir SS1) SPACESHIP_SPEED_X)))
+
+;(define (advance_spaceship_position x d) 0)     ; stub
+
+(define (advance_spaceship_position x d)
+  (+ x (* d SPACESHIP_SPEED_X)))
+
+;; (spaceship-x)::Natural (spaceship-dir)::Integer -> Integer
+;; produce the new direction of the spaceship if it bumps the edge, else do nothing
+(check-expect (update_spaceship_dir 100 1) 1)
+(check-expect (update_spaceship_dir 100 -1) -1)
+(check-expect (update_spaceship_dir 0 -1) 1)
+(check-expect (update_spaceship_dir WIDTH 1) -1)
+
+;(define (update_spaceship_dir x d) -1)      ; stub
+
+(define (update_spaceship_dir x d)
+  (cond [(> (+ x SPACESHIP_SPEED_X) (- WIDTH (/ (image-width SPACESHIP) 2))) -1]
+        [(< (- x SPACESHIP_SPEED_X) (/ (image-width SPACESHIP) 2)) 1]
+        [else d]))
 
 ;; ListOfBullet -> ListOfBullet
 ;; advance bullets of the list from spawn to BULLET_END by BULLET_SPEED
@@ -141,17 +191,56 @@
 
 (define (advance_bullets lob)
   (cond [(empty? lob) empty]
+        [(has_a_bullet_to_be_deleted? lob)
+         (delete_bullet lob)]
         [else
           (cons (advance_bullet (first lob))
                 (advance_bullets (rest lob))) ]))
 
-;;(define LOB2 (cons (make-bullet 20 100) (cons (make-bullet CENTER_X 100) empty)))
-;;(define G0 (make-game SS0 empty))
-;;(define G1 (make-game SS1 empty))
-;;(define SS0 (make-spaceship CENTER_X empty))
-;;(define SS1 (make-spaceship CENTER_X (cons B0 empty)))
-;;(define B0 (make-bullet 100 SPACESHIP_POS_Y))
-;;(define B1 (make-bullet 20 200))
+;; ListOfBullet -> Boolean
+;; produce true if a drop on the list is subject to deletion
+;; by checking if it's y-coordinate is greater than BULLET_END
+(check-expect (has_a_bullet_to_be_deleted? empty) false)        ; base
+(check-expect (has_a_bullet_to_be_deleted? (cons (make-bullet 10 100) empty)) false)
+(check-expect (has_a_bullet_to_be_deleted? (cons (make-bullet 10 BULLET_END) empty)) false)
+(check-expect (has_a_bullet_to_be_deleted? (cons (make-bullet 10 20) (cons (make-bullet 10 30) empty))) false)
+
+;(define (has_a_bullet_to_be_deleted? lod) empty)    ; stub
+; <template from ListOfBullet>
+
+(define (has_a_bullet_to_be_deleted? lob)
+  (cond [(empty? lob) false]
+        [else
+         (or  (delete? (first lob))
+              (has_a_bullet_to_be_deleted? (rest lob))) ]))
+
+;; Bullet -> Boolean
+;; produce true if the bullet's y-coordinate is less BULLET_END
+(check-expect (delete? (make-bullet 100 (- BULLET_END 1))) true)
+(check-expect (delete? (make-bullet 100 200)) false)
+(check-expect (delete? (make-bullet 100 BULLET_END)) false)
+
+(define (delete? b)
+  (< (bullet-y b) BULLET_END))
+
+;; ListOfBullet -> ListOfBullet
+;; delete a bullet from list if a bullet is subject to deletion
+(check-expect (delete_bullet empty) empty)        ; base
+(check-expect (delete_bullet (cons (make-bullet 10 100) empty)) (cons (make-bullet 10 100) empty))
+(check-expect (delete_bullet (cons (make-bullet 10 (- BULLET_END 1)) empty)) empty)
+(check-expect (delete_bullet (cons (make-bullet 10 (- BULLET_END 1)) (cons (make-bullet 10 30) empty))) (cons (make-bullet 10 30) empty))
+
+;(define (delete_bullet lob) lob)    ;stub
+; <template from ListOfBullet>
+
+(define (delete_bullet lob)
+  (cond [(empty? lob) empty]
+        [else
+         (cond [(delete? (first lob)) 
+                (delete_bullet (rest lob))]
+               [else
+                 (cons (first lob) 
+                       (delete_bullet (rest lob)))])]))
 
 ;; Bullet -> Bullet
 ;; advance bullet by BULLET_SPEED
@@ -164,7 +253,6 @@
 (define (advance_bullet b)
   (make-bullet (bullet-x b) (- (bullet-y b) BULLET_SPEED)))
 
-
 ;; SpaceInvaders -> Image
 ;; render an image according to (spaceship-x (game-spaceship g))
 ;; !!! render all images from Spaceship to Enemies
@@ -173,138 +261,156 @@
 ;(define (render g) empty-scene)     ; stub
 ; <template from SpaceInvaders>
 
-;(define (render g)
-;  (... (game-spaceship g)               
-;       (game-enemies g)))              
-
 (define (render g)
-  (renderGameObjects 
+  (render_game_objects 
     (game-spaceship g)
     (game-enemies g)))               
 
-;; ListOfEnemy Spaceship -> Image
+;; Spaceship ListOfEnemy -> Image
 ;; render ListOfEnemy to spaceship image 
-(define (renderGameObjects ss loe)
-  (cond [(empty? loe) (renderSpaceship ss)]
+(define (render_game_objects ss loe)
+  (cond [(empty? loe) (render_spaceship ss)]
         [else
-          (renderEnemies (first loe)
-                         (renderGameObjects ss (rest loe)))])) 
-;;!!! renderEnemies
+          (render_enemies (first loe)
+                         (render_game_objects ss (rest loe)))])) 
+;;!!! render_enemies
 ;; Enemy -> 
-(define (renderEnemies s d) (empty-scene))
+(define (render_enemies s d) (empty-scene))
+
 ;; Spaceship -> Image
 ;; render spaceship into an Image and Place it into MTS
-(check-expect (renderSpaceship (make-spaceship CENTER_X empty)) 
+(check-expect (render_spaceship (make-spaceship CENTER_X 1 empty)) 
               (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS))
-(check-expect (renderSpaceship (make-spaceship CENTER_X (cons (make-bullet CENTER_X BULLET_FIRE_POS_Y) empty)))
+(check-expect (render_spaceship (make-spaceship CENTER_X 1 (cons (make-bullet CENTER_X BULLET_FIRE_POS_Y) empty)))
               (place-image BULLET CENTER_X BULLET_FIRE_POS_Y
                            (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS)))
 
-;(define (renderSpaceship s) MTS)        ; stub
+;(define (render_spaceship s) MTS)        ; stub
 ; <template from Spaceship>
 
-(define (renderSpaceship s)
-  (renderBullets (spaceship-bullets s)
-                 (spaceship-x s)))
+(define (render_spaceship s)
+  (render_bullets (spaceship-bullets s) 
+                  (spaceship-x s)))
 
 ;; ListOfBullet Natural -> Image
 ;; render bullets from list to the spaceship image at x
-(check-expect (renderBullets empty CENTER_X) (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS))
-(check-expect (renderBullets (cons (make-bullet 20 100) empty) CENTER_X) 
+(check-expect (render_bullets empty CENTER_X) (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS))
+(check-expect (render_bullets (cons (make-bullet 20 100) empty) CENTER_X) 
               (place-image BULLET 20 100 (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS)))
 
-;(define (renderBullets lob x) (empty-scene))    ; stub
+;(define (render_bullets lob x) (empty-scene))    ; stub
 ; <template from ListOfBullet>
 
-(define (renderBullets lob x)
+(define (render_bullets lob x)
   (cond [(empty? lob) (place-image SPACESHIP x SPACESHIP_POS_Y MTS)]
         [else
-          (renderBullet (first lob)
-                        (renderBullets (rest lob) x))]))
+          (render_bullet (first lob) 
+                         (render_bullets (rest lob) x))]))
 
 ;; Bullet Image -> Image
 ;; render bullet to an Image
-(check-expect (renderBullet B0 MTS) (place-image BULLET 100 BULLET_FIRE_POS_Y MTS))
-(check-expect (renderBullet B1 MTS) (place-image BULLET 20 200 MTS))
+(check-expect (render_bullet B0 MTS) (place-image BULLET 100 BULLET_FIRE_POS_Y MTS))
+(check-expect (render_bullet B1 MTS) (place-image BULLET 20 200 MTS))
 
-;(define (renderBullet b) MTS)   ;stub
+;(define (render_bullet b) MTS)   ;stub
 ; <template from Bullet>
 
-(define (renderBullet b img)
+(define (render_bullet b img)
   (place-image BULLET (bullet-x b) (bullet-y b) img))
 
 ;; SpaceInvaders KeyEvent -> SpaceInvaders
-;; move Spaceship by adding or subtract SPACESHIP_SPEED_X to/from current x
-;; !!! add argument for lists and spacebar
+;; change the Spaceship's direction with the left and right arrow keys
+;; add argument for enemies !!!
 (check-expect (handle_key G0 "right") 
-              (make-game (make-spaceship (+ CENTER_X SPACESHIP_SPEED_X) empty) empty))
+              (make-game (make-spaceship CENTER_X 1 empty) empty))
 
 (check-expect (handle_key G0 "left") 
-              (make-game (make-spaceship (- CENTER_X SPACESHIP_SPEED_X) empty) empty))
+              (make-game (make-spaceship CENTER_X -1 empty) empty))
 
 (check-expect (handle_key G0 " ") 
               (make-game (make-spaceship 
                            CENTER_X 
-                           (cons (make-bullet (get_spaceship_pos G0) BULLET_FIRE_POS_Y) empty)) 
+                           1
+                           (cons (make-bullet (spaceship-x (game-spaceship G0)) BULLET_FIRE_POS_Y) empty)) 
                          empty))
 
 ;(define (handle_key g key) g)       ; stub
 ; <template from KeyEvent>
 
 (define (handle_key g key)
-  (cond [(and (key=? key "right") 
-              (can_go_to_dir (get_spaceship_pos g) key)) 
-         (make-game (make-spaceship 
-                      (+ (get_spaceship_pos g) SPACESHIP_SPEED_X)
-                      (spaceship-bullets (game-spaceship g)))         ; ListOfBullet
-                    empty)]          ; ListofEnemy
-        [(and (key=? key "left") 
-              (can_go_to_dir (get_spaceship_pos g) key))
-         (make-game (make-spaceship 
-                      (- (get_spaceship_pos g) SPACESHIP_SPEED_X)
-                      (spaceship-bullets (game-spaceship g)))         ; ListOfBullet
-                    empty)]          ; ListofEnemy
-        [(key=? key " ") 
-         (make-game (make-spaceship 
-                      (get_spaceship_pos g) 
-                      (add_bullet g)) 
-                    empty)]
-        [else g]))
-
-;; SpaceInvaders -> Natural
-;; produce the current x coordinate of the Spaceship
-(check-expect (get_spaceship_pos G0) CENTER_X)
-
-(define (get_spaceship_pos g)
-  (spaceship-x (game-spaceship g)))
-
-;; Natural KeyEvent -> Boolean
-;; produce true if current x could still go futher to its direction
-(check-expect (can_go_to_dir 100 "right") true)
-(check-expect (can_go_to_dir 100 "left") true)
-(check-expect (can_go_to_dir WIDTH "right") false)
-(check-expect (can_go_to_dir 100 "left") true)
-
-;(define (can_go_to_dir x key ke) false)     ; stub
-
-(define (can_go_to_dir x key)
   (cond [(key=? key "right") 
-         (< (+ x SPACESHIP_SPEED_X) 
-            (- WIDTH (/ (image-width SPACESHIP) 2)))]
-        [(key=? key "left")
-         (> (- x SPACESHIP_SPEED_X) 
-            (/ (image-width SPACESHIP) 2))]))
+         (make-game 
+           (change_spaceship_dir (game-spaceship g) 1)
+           empty)]
+        [(key=? key "left") 
+         (make-game 
+           (change_spaceship_dir (game-spaceship g) -1)
+           empty)]
+        [(key=? key " ") 
+         (make-game 
+           (fire_bullet (game-spaceship g))
+           empty)]
+        [else 
+          g]))
 
+;; Spaceship Integer -> Spaceship
+;; change spaceship's direction by multiplying (spaceship-dir) by given integer::direction
+(check-expect (change_spaceship_dir SS0 -1) (make-spaceship CENTER_X -1 empty))
+(check-expect (change_spaceship_dir SS1 1) (make-spaceship CENTER_X 1 (cons B0 empty)))
 
-;; SpaceInvaders -> ListOfBullet
-;; ListOfBullet Natural-> ListOfBullet
+;(define (change_spaceship_dir ss) ss)   ; stub
+; <template from Spaceship>
+
+(define (change_spaceship_dir ss d)
+  (make-spaceship (spaceship-x ss) 
+                  d
+                  (spaceship-bullets ss)))
+
+;; Spaceship -> Spaceship
+;; fire bullets by adding a Bullet to the ListOfBullet
+(check-expect (fire_bullet SS0) 
+              (make-spaceship (spaceship-x SS0)
+                              (spaceship-dir SS0)
+                              (cons 
+                                (make-bullet 
+                                  (spaceship-x SS0)
+                                  BULLET_FIRE_POS_Y)
+                                empty)))
+
+(check-expect (fire_bullet SS1) 
+              (make-spaceship (spaceship-x SS1)
+                              (spaceship-dir SS1)
+                              (cons (make-bullet (spaceship-x SS1) BULLET_FIRE_POS_Y) 
+                                    (cons B0 empty))))
+
+;(define (fire_bullet ss) ss)            ; stub
+; <template from Spaceship>
+
+(define (fire_bullet ss)
+  (make-spaceship (spaceship-x ss)                 
+                  (spaceship-dir ss)              
+                  (add_bullet ss)))    
+
+;(define G0 (make-game SS0 empty))
+;(define G1 (make-game SS1 empty))
+;(define B0 (make-bullet 100 BULLET_FIRE_POS_Y))
+;(define B1 (make-bullet 20 200))
+;(define SS0 (make-spaceship CENTER_X 1 empty))
+;(define SS1 (make-spaceship CENTER_X -1 (cons B0 empty)))
+;(define LOB0 empty)
+;(define LOB1 (cons (make-bullet 20 100) empty))
+;(define LOB2 (cons (make-bullet 20 100) (cons (make-bullet CENTER_X 100) empty)))
+
+;; Spaceship -> ListOfBullet
 ;; add bullets to the (spaceship-bullets) at the current SPACESHIP_POS_X 
-(check-expect (add_bullet (make-game (make-spaceship CENTER_X empty) empty))
-              (cons (make-bullet CENTER_X BULLET_FIRE_POS_Y) empty))
+(check-expect (add_bullet SS0) 
+              (cons (make-bullet (spaceship-x SS0) BULLET_FIRE_POS_Y) empty))
+(check-expect (add_bullet SS1) 
+              (cons (make-bullet (spaceship-x SS1) BULLET_FIRE_POS_Y) (cons B0 empty)))
 
-(define (add_bullet g)
-  (cons (make-bullet 
-          (get_spaceship_pos g) 
-          BULLET_FIRE_POS_Y) 
-        (spaceship-bullets (game-spaceship g))))
+;(define (add_bullet ss) lob)    ; stub
+; <template from Spaceship>
 
+(define (add_bullet ss)
+  (cons (make-bullet (spaceship-x ss) BULLET_FIRE_POS_Y) 
+        (spaceship-bullets ss)))
