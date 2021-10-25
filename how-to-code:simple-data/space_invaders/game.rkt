@@ -1,11 +1,9 @@
 (require 2htdp/image)
 (require 2htdp/universe)
-;; Add spaceship X position tick
-;; Add enemies
 
 ;; ===========
 ;; Constants:
-;; !!! 
+;; !!! ADD ENEMY CONSTANT
 
 (define WIDTH 325)
 (define CENTER_X (/ WIDTH 2))
@@ -20,6 +18,14 @@
 (define BULLET_FIRE_POS_Y (- HEIGHT (image-height SPACESHIP)))
 (define BULLET_SPEED 20)
 (define BULLET_END (- 0 (image-height BULLET)))
+
+(define ENEMY)
+(define ENEMY_Y_SPEED 15)
+(define ENEMY_X_SPEED ENEMY_Y_SPEED)
+(define ENEMY_END HEIGHT)
+(define ENEMY_SPAWN_Y (- 0 (image-height ENEMY)))
+(define ENEMY_SPAWN_DIR 1)      ; 1 = right, -1 left
+(define ENEMY_SPAWN_INTERVAL 1.01)
 
 ;; ==================
 ;; Data definitions:
@@ -76,8 +82,42 @@
 ;; Template rules used: 
 ;; - compound: 3 fields
 
-;;(define-struct enemy)
-;; !!! create compound enemy and ListOfEnemy
+(define-struct enemy (x y dir))
+;; Enemy is (make-enemy Natural Natural Integer)
+;; interp. an enemy at x, y screen-coordinate
+;;          dir is direction, -1 for left and +1 for right
+(define E0 (make-enemy 100 200 -1))
+(define E1 (make-enemy 200 100 1))
+
+#;
+(define (fn-for-enemy e)
+  (... (enemy-x e)                 ; Natural
+       (enemy-y e)                 ; Natural
+       (enemy-dir e)))             ; Integer
+
+;; Template rules used: 
+;; - compound: 3 fields
+
+;; ListofEnemy is one of:
+;; - empty
+;; - (cons Enemy ListOfEnemy)
+(define LOE0 empty)
+(define LOE1 (cons E0 empty))
+(define LOE2 (cons E0 (cons E1 empty)))
+
+#;
+(define (fn-for-loe loe)
+  (cond [(empty? loe) (...)]
+        [else
+         (... (fn-for-enemy (first loe))
+              (fn-for-loe (rest loe))) ]))
+
+;; Template rules used: 
+;; - one of: 2 cases
+;; - atomic distinct: empty
+;; - compound: (cons Enemy ListOfEnemy)
+;; - reference: (first loe) is Enemy
+;; - self-reference: (rest loe) is ListOfEnemy
 
 (define-struct game (spaceship enemies))
 ;; SpaceInvaders is (make-game Spaceship ListOfBullet ListofEnemy)
