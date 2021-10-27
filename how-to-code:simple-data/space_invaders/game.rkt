@@ -1,9 +1,13 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname game) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require 2htdp/image)
 (require 2htdp/universe)
 
+;; create a spawn that needs 2 seconds then 1 sec
+
 ;; ===========
 ;; Constants:
-;; !!! ADD ENEMY CONSTANT
 
 (define WIDTH 325)
 (define CENTER_X (/ WIDTH 2))
@@ -12,20 +16,23 @@
 
 (define SPACESHIP (bitmap/file "spaceship.png"))
 (define SPACESHIP_POS_Y (- HEIGHT (/ (image-height SPACESHIP) 2)))
-(define SPACESHIP_SPEED_X 8)
+(define SPACESHIP_SPEED_X 6)
 
 (define BULLET (bitmap/file "bullet-fire.png"))
 (define BULLET_FIRE_POS_Y (- HEIGHT (image-height SPACESHIP)))
 (define BULLET_SPEED 20)
 (define BULLET_END (- 0 (image-height BULLET)))
 
-(define ENEMY)
-(define ENEMY_Y_SPEED 15)
+(define ENEMY (bitmap/file "enemy.png"))
+(define ENEMY_Y_SPEED 5)
 (define ENEMY_X_SPEED ENEMY_Y_SPEED)
 (define ENEMY_END HEIGHT)
+(define ENEMY_SPAWN_X (/ WIDTH 2))
 (define ENEMY_SPAWN_Y (- 0 (image-height ENEMY)))
-(define ENEMY_SPAWN_DIR 1)      ; 1 = right, -1 left
-(define ENEMY_SPAWN_INTERVAL 1.01)
+;; 1 = right, -1 left
+(define ENEMY_SPAWN_DIR 1)      
+(define ENEMY_SPAWN_INTERVAL 1)
+(define ENEMY_SPAWN_SPEED 1/28)
 
 ;; ==================
 ;; Data definitions:
@@ -86,8 +93,8 @@
 ;; Enemy is (make-enemy Natural Natural Integer)
 ;; interp. an enemy at x, y screen-coordinate
 ;;          dir is direction, -1 for left and +1 for right
-(define E0 (make-enemy 100 200 -1))
-(define E1 (make-enemy 200 100 1))
+(define E0 (make-enemy 100 ENEMY_SPAWN_Y ENEMY_SPAWN_DIR))
+(define E1 (make-enemy 150 ENEMY_SPAWN_Y ENEMY_SPAWN_DIR))
 
 #;
 (define (fn-for-enemy e)
@@ -96,7 +103,7 @@
        (enemy-dir e)))             ; Integer
 
 ;; Template rules used: 
-;; - compound: 3 fields
+;; - compound: 4 fields
 
 ;; ListofEnemy is one of:
 ;; - empty
@@ -119,18 +126,21 @@
 ;; - reference: (first loe) is Enemy
 ;; - self-reference: (rest loe) is ListOfEnemy
 
-(define-struct game (spaceship enemies))
-;; SpaceInvaders is (make-game Spaceship ListOfBullet ListofEnemy)
+(define-struct game (spaceship enemies si))
+;; SpaceInvaders is (make-game Spaceship ListOfBullet ListofEnemy Integer)
 ;; interp. a SpaceInvaders game has
 ;;      spaceship - a Spaceship compound data that is controlled by user
 ;;      enemies - is ListofEnemy, a compound data type that spawns over time
-(define G0 (make-game SS0 empty))
-(define G1 (make-game SS1 empty))
+;;      si - is Spawn interval of enemies
+(define G0 (make-game SS0 empty ENEMY_SPAWN_INTERVAL))
+(define G1 (make-game SS1 empty ENEMY_SPAWN_INTERVAL))
+(define G2 (make-game SS0 LOE1 ENEMY_SPAWN_INTERVAL))
 
 #;
 (define (fn-for-game g)
   (... (game-spaceship g)               ; Spaceship
-       (game-enemies g)))               ; ListofEnemy
+       (game-enemies g)                 ; ListofEnemy
+       (game-si g)))                    ; Natural
 
 ;; Template rules used: 
 ;; - compound: 2 fields
@@ -140,41 +150,53 @@
 
 ;; SpaceInvaders -> SpaceInvaders
 ;; start game with (main G0)
-;; !!! Create handlers
 (define (main g)
   (big-bang g                                   ; SpaceInvaders
             (state true)
             (on-tick    advance_handler)        ; SpaceInvaders -> SpaceInvaders
             (to-draw    render)                 ; SpaceInvaders -> Image
-            ;(stop-when  ...)                   ; SpaceInvaders -> Boolean
+            (stop-when  game_end?)              ; SpaceInvaders -> Boolean
             (on-key     handle_key)))           ; SpaceInvaders KeyEvent -> SpaceInvaders
 
 ;; SpaceInvaders -> SpaceInvaders
 ;; advance bullets of the list from spawn to BULLET_END by BULLET_SPEED
-(check-expect (advance_handler G0) (make-game (make-spaceship (+ CENTER_X SPACESHIP_SPEED_X) 1 empty) empty))
-(check-expect (advance_handler G1) (make-game 
+(check-random (advance_handler G0) (make-game (make-spaceship (+ CENTER_X SPACESHIP_SPEED_X) 1 empty) 
+                                              (cons (make-enemy ENEMY_SPAWN_X ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) empty)
+                                              (+ ENEMY_SPAWN_INTERVAL ENEMY_SPAWN_SPEED)))
+(check-random (advance_handler G1) (make-game 
                                      (make-spaceship 
                                        (- CENTER_X SPACESHIP_SPEED_X) 
                                        -1 
                                        (cons (make-bullet 100 (- BULLET_FIRE_POS_Y BULLET_SPEED)) empty)) 
-                                     empty))
+                                     (cons (make-enemy ENEMY_SPAWN_X ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) empty)
+                                     (+ ENEMY_SPAWN_INTERVAL ENEMY_SPAWN_SPEED)))
+
+(check-random (advance_handler G2) (make-game 
+                                     (make-spaceship 
+                                       (+ CENTER_X SPACESHIP_SPEED_X) 
+                                       1 
+                                       empty) 
+                                     (cons (make-enemy ENEMY_SPAWN_X ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) 
+                                           (cons (make-enemy 100 ENEMY_SPAWN_Y 1) empty))
+                                     (+ ENEMY_SPAWN_INTERVAL ENEMY_SPAWN_SPEED)))
 
 ;(define (advance_handler g) g)       ; stub
 ; <template from SpaceInvaders>
 
-;; !!! make advance enemies
-;(define (advance_handler g)
-;  (make-game (advance_spaceship (game-spaceship g)) 
-;             (advance_enemies (game-enemies g))))               
-
+;; !!! Create a condition where it checks whether a a bullet and an enemy collides
+;; create a function that checks
+;; delete both the enemy and the bullet
 (define (advance_handler g)
-  (make-game (advance_spaceship (game-spaceship g)) 
-             empty))               
+  (cond [(check) 
+         ()]
+        [else
+          (make-game (advance_spaceship (game-spaceship g)) 
+             (advance_enemies (game-enemies g) (game-si g))
+             (spawn_interval (game-si g)))]))               
 
+(define (check_if_a_bullet_collided loe lob))
 
 ;; Spaceship -> Spaceship
-; !!! Spaceship on tick and advance bullets
-;; instead of in the keyboard handler that can go to direction change it into advance handler
 ;; move spaceship to its direction by by SPACESHIP_SPEED_X
 ;; and advance the bullets
 (check-expect (advance_spaceship SS0) (make-spaceship (+ CENTER_X (* (spaceship-dir SS0) SPACESHIP_SPEED_X)) 1 empty))
@@ -213,8 +235,8 @@
 ;(define (update_spaceship_dir x d) -1)      ; stub
 
 (define (update_spaceship_dir x d)
-  (cond [(> (+ x SPACESHIP_SPEED_X) (- WIDTH (/ (image-width SPACESHIP) 2))) -1]
-        [(< (- x SPACESHIP_SPEED_X) (/ (image-width SPACESHIP) 2)) 1]
+  (cond [(>= (+ x SPACESHIP_SPEED_X) (- WIDTH (/ (image-width SPACESHIP) 2))) -1]
+        [(<= (- x SPACESHIP_SPEED_X) (/ (image-width SPACESHIP) 2)) 1]
         [else d]))
 
 ;; ListOfBullet -> ListOfBullet
@@ -293,9 +315,79 @@
 (define (advance_bullet b)
   (make-bullet (bullet-x b) (- (bullet-y b) BULLET_SPEED)))
 
+;; ListofEnemy Integer -> ListofEnemy
+;; produce enemies every second from the ENEMY_SPAWN_Y and at random X 
+;; advance every enemy on the list
+(check-random (advance_enemies LOE0 1) (cons (make-enemy ENEMY_SPAWN_X ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) empty))
+(check-expect (advance_enemies LOE0 1/28) empty)
+(check-random (advance_enemies LOE1 1) 
+              (cons (make-enemy ENEMY_SPAWN_X ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) 
+                    (cons (make-enemy 100 ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) empty)))
+(check-expect (advance_enemies LOE1 1/28) 
+              (cons (make-enemy (+ 100 ENEMY_X_SPEED) (+ ENEMY_SPAWN_Y ENEMY_Y_SPEED) ENEMY_SPAWN_DIR) empty))
+
+;(define (advance_enemies loe) loe)  ; stub
+; <template from ListofEnemy>
+
+(define (advance_enemies loe i)
+  (cond [(integer? i) 
+         (cons (make-enemy (spawn_enemy_x i) ENEMY_SPAWN_Y ENEMY_SPAWN_DIR) loe)]
+        [else
+          (cond [(empty? loe) empty]
+                [else
+                  (cons (advance_enemy (first loe)) 
+                        (advance_enemies (rest loe) i))])]))
+
+
+;; Enemy -> Enemy
+;; advance enemy position by adding ENEMY_Y_SPEED and ENEMY_X_SPEED to x and y
+(check-expect (advance_enemy E0) (make-enemy (+ 100 ENEMY_X_SPEED) (+ ENEMY_SPAWN_Y ENEMY_Y_SPEED) ENEMY_SPAWN_DIR))
+
+;(define (advance_enemy e) e)    ; stub
+
+(define (advance_enemy e)
+  (make-enemy 
+    (+ (enemy-x e) (* (enemy-dir e) ENEMY_X_SPEED))
+    (+ (enemy-y e) ENEMY_Y_SPEED)
+    (update_enemy_dir (enemy-x e) (enemy-dir e))))
+
+;; Integer -> Integer
+;; update (enemy-dir) when enemy bumps the side of the screen
+(check-expect (update_enemy_dir 100 1) 1)
+(check-expect (update_enemy_dir 100 -1) -1)
+(check-expect (update_enemy_dir 0 -1) 1)
+(check-expect (update_enemy_dir WIDTH 1) -1)
+
+;(define (update_enemy_dir x dir) dir)     ;stub
+
+(define (update_enemy_dir x d) 
+  (cond [(>= (+ x ENEMY_X_SPEED) (- WIDTH (/ (image-width ENEMY) 2))) -1]
+        [(<= (- x SPACESHIP_SPEED_X) (/ (image-width ENEMY) 2)) 1]
+        [else d]))
+
+;; Integer -> Integer
+;; add ENEMY_SPAWN_SPEED to interval
+(check-expect (spawn_interval ENEMY_SPAWN_INTERVAL) (+ ENEMY_SPAWN_INTERVAL ENEMY_SPAWN_SPEED))
+(check-expect (spawn_interval 0.5) (+ 0.5 ENEMY_SPAWN_SPEED))
+
+;(define (spawn_interval i) 0)   ; stub
+
+(define (spawn_interval i) 
+  (+ i ENEMY_SPAWN_SPEED))
+
+;; Integer -> Integer[0, WIDTH]
+;; produce a new enemy spawn x coordinate
+(check-expect (spawn_enemy_x 1) ENEMY_SPAWN_X)
+
+;(define (spawn_enemy_x i) 0)   ;stub
+
+(define (spawn_enemy_x i) 
+  (cond [(= 1 i) ENEMY_SPAWN_X]
+        [else
+          (random WIDTH)]))
+
 ;; SpaceInvaders -> Image
 ;; render an image according to (spaceship-x (game-spaceship g))
-;; !!! render all images from Spaceship to Enemies
 (check-expect (render G0) (place-image SPACESHIP CENTER_X SPACESHIP_POS_Y MTS)) 
 
 ;(define (render g) empty-scene)     ; stub
@@ -311,11 +403,17 @@
 (define (render_game_objects ss loe)
   (cond [(empty? loe) (render_spaceship ss)]
         [else
-          (render_enemies (first loe)
-                         (render_game_objects ss (rest loe)))])) 
-;;!!! render_enemies
-;; Enemy -> 
-(define (render_enemies s d) (empty-scene))
+          (render_enemies (first loe) 
+                          (render_game_objects ss (rest loe)))])) 
+;; Enemy Image -> Image
+;; render Enemy into an Image
+(check-expect (render_enemies E0 MTS) (place-image ENEMY 100 ENEMY_SPAWN_Y MTS))
+(check-expect (render_enemies E0 MTS) (place-image ENEMY 150 ENEMY_SPAWN_Y MTS))
+
+;(define (render_enemies e img) (empty-scene))      ; stub
+
+(define (render_enemies e img)
+  (place-image ENEMY (enemy-x e) (enemy-y e) img))
 
 ;; Spaceship -> Image
 ;; render spaceship into an Image and Place it into MTS
@@ -360,19 +458,19 @@
 
 ;; SpaceInvaders KeyEvent -> SpaceInvaders
 ;; change the Spaceship's direction with the left and right arrow keys
-;; add argument for enemies !!!
 (check-expect (handle_key G0 "right") 
-              (make-game (make-spaceship CENTER_X 1 empty) empty))
+              (make-game (make-spaceship CENTER_X 1 empty) (game-enemies G0) (game-si G0)))
 
 (check-expect (handle_key G0 "left") 
-              (make-game (make-spaceship CENTER_X -1 empty) empty))
+              (make-game (make-spaceship CENTER_X -1 empty) (game-enemies G0) (game-si G0)))
 
 (check-expect (handle_key G0 " ") 
               (make-game (make-spaceship 
                            CENTER_X 
                            1
                            (cons (make-bullet (spaceship-x (game-spaceship G0)) BULLET_FIRE_POS_Y) empty)) 
-                         empty))
+                         (game-enemies G0) 
+                         (game-si G0)))
 
 ;(define (handle_key g key) g)       ; stub
 ; <template from KeyEvent>
@@ -381,15 +479,18 @@
   (cond [(key=? key "right") 
          (make-game 
            (change_spaceship_dir (game-spaceship g) 1)
-           empty)]
+           (game-enemies g)
+           (game-si g))]
         [(key=? key "left") 
          (make-game 
            (change_spaceship_dir (game-spaceship g) -1)
-           empty)]
+           (game-enemies g)
+           (game-si g))]
         [(key=? key " ") 
          (make-game 
            (fire_bullet (game-spaceship g))
-           empty)]
+           (game-enemies g)
+           (game-si g))]
         [else 
           g]))
 
@@ -431,16 +532,6 @@
                   (spaceship-dir ss)              
                   (add_bullet ss)))    
 
-;(define G0 (make-game SS0 empty))
-;(define G1 (make-game SS1 empty))
-;(define B0 (make-bullet 100 BULLET_FIRE_POS_Y))
-;(define B1 (make-bullet 20 200))
-;(define SS0 (make-spaceship CENTER_X 1 empty))
-;(define SS1 (make-spaceship CENTER_X -1 (cons B0 empty)))
-;(define LOB0 empty)
-;(define LOB1 (cons (make-bullet 20 100) empty))
-;(define LOB2 (cons (make-bullet 20 100) (cons (make-bullet CENTER_X 100) empty)))
-
 ;; Spaceship -> ListOfBullet
 ;; add bullets to the (spaceship-bullets) at the current SPACESHIP_POS_X 
 (check-expect (add_bullet SS0) 
@@ -453,4 +544,24 @@
 
 (define (add_bullet ss)
   (cons (make-bullet (spaceship-x ss) BULLET_FIRE_POS_Y) 
-        (spaceship-bullets ss)))
+       (spaceship-bullets ss)))
+
+;; SpaceInvaders -> Boolean
+;; stop the game when an enemy crosses the end 
+(define (game_end? g)
+  (check_if_game_ended (game-enemies g)))
+
+;; ListofEnemy -> Boolean
+;; produce true if an enemy crossed_the_line
+(define (check_if_game_ended loe)
+  (cond [(empty? loe) false]
+        [else
+          (or (crossed_the_line? (first loe))
+              (check_if_game_ended (rest loe)))]))
+
+;; Enemy -> Boolean
+;; produce true if enemy-y is greater or equal to default enemy end
+(define (crossed_the_line? e)
+  (>= (enemy-y e) ENEMY_END))
+
+

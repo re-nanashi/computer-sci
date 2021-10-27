@@ -1,21 +1,17 @@
 #Space invaders Design Analysis
 
-#How I would go by the project
-Current >>>>        Step1 : Create an initial domain analysis << create a overview of what to add to the game  
-                            a. Create the data definitions
-                            b. Review the data structures to be used in the game
-                            c. Review the flow of the code and how to code the game efficiently
-                    Step2 : psuedo code as much as possible for the functions << FOCUS on funtional programming paradigms and use helpers for creatingFunctions
-                                !!! Separate implementations if necessary !!!
-                                1. make the spaceship go left to right and left to left
-                                2. make the bullets fire when space is called from the position of the of the spaceship
-                                3. Spawn the enemies ! make sure that the enemies spawns properly according to the time interval
-                                4. Create a function that deletes both bullet and enemy if a piece of bullet lands to anything around the enemy
-                    Step3 : Code the whole psuedo code starting with:
-                                1. Spaceship
-                                2. Bullets
-                                3. Enemies
-                                4. Function for removal of enemies and bullets
+CURRENT PROBLEM:
+
+? SPAWN ENEMIES AT A CERTAIN INTERVAL THAT increases over time
+        What are the problems in implementing this ?
+            - How will I be able to spawn the enemies every second ?
+            - Can i decrease the interval of one spawn to another over time ?
+            - Is there any other way to implement this ?
+            - 
+
+FIRST THOUGHT: IS create an interval field to enemy and add 1/28 per tick
+                if (if current value is modulo 1) spawn an enemy
+
 
 ;;;;;;;;;;;;
 Constants:
@@ -124,3 +120,20 @@ FUNCTION
 create a function that deletes both the bullet and the enemy if bullet hits the enemy
     check at tick if a bullet and enemy is near each other
     delete both of them from the list
+
+#How I would go by the project
+Current >>>>        Step1 : Create an initial domain analysis << create a overview of what to add to the game  
+                            a. Create the data definitions
+                            b. Review the data structures to be used in the game
+                            c. Review the flow of the code and how to code the game efficiently
+                    Step2 : psuedo code as much as possible for the functions << FOCUS on funtional programming paradigms and use helpers for creatingFunctions
+                                !!! Separate implementations if necessary !!!
+                                1. make the spaceship go left to right and left to left
+                                2. make the bullets fire when space is called from the position of the of the spaceship
+                                3. Spawn the enemies ! make sure that the enemies spawns properly according to the time interval
+                                4. Create a function that deletes both bullet and enemy if a piece of bullet lands to anything around the enemy
+                    Step3 : Code the whole psuedo code starting with:
+                                1. Spaceship
+                                2. Bullets
+                                3. Enemies
+                                4. Function for removal of enemies and bullets
