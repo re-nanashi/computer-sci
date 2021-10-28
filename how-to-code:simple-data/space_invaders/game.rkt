@@ -4,8 +4,6 @@
 (require 2htdp/image)
 (require 2htdp/universe)
 
-;; create a spawn that needs 2 seconds then 1 sec
-
 ;; ===========
 ;; Constants:
 
@@ -145,6 +143,20 @@
 ;; Template rules used: 
 ;; - compound: 2 fields
 
+(define-struct nlist (loe lob))
+;; NewList is (make-nlist ListOfEnemy ListOfBullet)
+;; interp. a data type that consists of new lists 
+(define NL0 (make-nlist empty empty))
+(define NL1 (make-nlist (cons (make-enemy 100 100 1) empty) (cons (make-bullet 100 100) empty)))
+
+#;
+(define (fn-for-nlist nl)
+  (... (nlist-loe nl)                   ; ListofEnemy
+       (nlist-lob nl)))                 ; ListOfBullet
+
+;; Template rules used: 
+;; - compound: 2 fields
+
 ;; ===========
 ;; Functions:
 
@@ -186,15 +198,96 @@
 ;; !!! Create a condition where it checks whether a a bullet and an enemy collides
 ;; create a function that checks
 ;; delete both the enemy and the bullet
+;;      first create a list of the coordinates to delete
+;;      delete on enemies -> new enemy list
+;;      delete on bullets -> new bullets list
+;;      create a new state according to new list
 (define (advance_handler g)
-  (cond [(check) 
-         ()]
+  (cond [(check_if_a_bullet_collided 
+           (game-enemies g) 
+           (spaceship-bullets (game-spaceship g)))
+         (create_new_state 
+           (game-spaceship g)
+           (remove_from_game 
+             (create_delete_list ())
+             (game-enemies g) 
+             (spaceship-bullets (game-spaceship g)))
+           (game-si g))]
         [else
           (make-game (advance_spaceship (game-spaceship g)) 
-             (advance_enemies (game-enemies g) (game-si g))
-             (spawn_interval (game-si g)))]))               
+                     (advance_enemies (game-enemies g) (game-si g)) 
+                     (spawn_interval (game-si g)))]))               
 
-(define (check_if_a_bullet_collided loe lob))
+;; ListOfEnemy ListOfBullet -> NewList
+;; produce the new list by removing colliding bullets and enemies
+
+
+
+;; Spaceship NewList Interval -> SpaceInvaders
+;; remove collided bullets and enemies from respective lists and new game state
+(define (create_new_state ss nl si)
+  (make-game 
+             (make-spaceship 
+               (spaceship-x ss) 
+               (spaceship-dir ss)
+               (nlist-lob nl))
+             (nlist-loe nl)
+             si))
+
+
+
+;; ListOfEnemy ListOfBullet -> Boolean
+;; produce true if the x, y coordinates of a bullet on the list hits an enemy
+(check-expect (check_if_a_bullet_collided 
+                empty empty) false)
+(check-expect (check_if_a_bullet_collided 
+                empty (cons (make-bullet 205 200) empty)) false)
+(check-expect (check_if_a_bullet_collided 
+                (cons (make-enemy 200 200 1) empty) empty) false)
+(check-expect (check_if_a_bullet_collided 
+                (cons (make-enemy 200 200 1) empty) (cons (make-bullet 0 200) empty)) false)
+(check-expect (check_if_a_bullet_collided 
+                (cons (make-enemy 200 200 1) empty) (cons (make-bullet 205 200) empty)) true)
+(check-expect (check_if_a_bullet_collided 
+                (cons (make-enemy 200 200 1) empty) (cons (make-bullet 0 200) (cons (make-bullet 205 200) empty))) true)
+
+
+;(define (check_if_a_bullet_collided loe lob) false)        ;stub
+
+(define (check_if_a_bullet_collided loe lob)
+  (cond [(empty? loe) false]
+        [else
+          (or  (check_if_x_is_near (first loe) lob) 
+               (check_if_a_bullet_collided (rest loe) lob))]))
+
+;; Enemy ListOfBullet -> Boolean
+;; produce true if (enemy-y) == (bullet-y) && (enemy-x) +/- (image-width ENEMY) is 
+;; near a bullet's x coordinate inside a list 
+(check-expect (check_if_x_is_near (make-enemy 200 200 1) empty) false)
+(check-expect (check_if_x_is_near 
+                (make-enemy 200 200 1) 
+                (cons (make-bullet 0 200) (cons (make-bullet 205 200) empty)))true)
+
+;(define (check_if_x_is_near e lob) false)       ; stub
+
+(define (check_if_x_is_near e lob) 
+  (cond [(empty? lob) false]
+        [else
+          (or  (compare (first lob) e) 
+               (check_if_x_is_near e (rest lob)))]))
+
+;; Bullet Enemy -> Boolean
+;; produce true when bullet's x,y and enemy's x,y is near
+(check-expect (compare (make-bullet 0 200) (make-enemy 200 200 1)) false)
+(check-expect (compare (make-bullet 200 200) (make-enemy 200 200 1)) true)
+(check-expect (compare (make-bullet 195 200) (make-enemy 200 200 1)) true)
+(check-expect (compare (make-bullet 205 200) (make-enemy 200 200 1)) true)
+
+(define (compare b e)
+  (and (equal? (bullet-y b) (enemy-y e)) 
+       (<= (- (enemy-x e) (image-width ENEMY))
+           (bullet-x b)
+           (+ (enemy-x e) (image-width ENEMY)))))
 
 ;; Spaceship -> Spaceship
 ;; move spaceship to its direction by by SPACESHIP_SPEED_X
