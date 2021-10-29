@@ -143,19 +143,38 @@
 ;; Template rules used: 
 ;; - compound: 2 fields
 
-(define-struct nlist (loe lob))
-;; NewList is (make-nlist ListOfEnemy ListOfBullet)
-;; interp. a data type that consists of new lists 
-(define NL0 (make-nlist empty empty))
-(define NL1 (make-nlist (cons (make-enemy 100 100 1) empty) (cons (make-bullet 100 100) empty)))
+(define-struct collided (e b))
+;; Collided pari is (make-collided Enemy Bullet)
+;; interp. a data type that consists of collided Enemy-Bullet pair
+(define C0 (make-collided (make-enemy 100 100 1) (make-bullet 100 100)))
+(define C1 (make-collided (make-enemy 200 100 1) (make-bullet 200 100)))
 
 #;
-(define (fn-for-nlist nl)
-  (... (nlist-loe nl)                   ; ListofEnemy
-       (nlist-lob nl)))                 ; ListOfBullet
+(define (fn-for-c c)
+  (... (collided-e c)                   ; Enemy
+       (collided-b c)))                 ; Bullet
 
 ;; Template rules used: 
 ;; - compound: 2 fields
+
+;; ListofCollided is one of:
+;; - empty
+;; (cons Collided ListofCollided)
+(define LOC0 empty)
+(define LOC1 (cons C0 empty))
+
+#;
+(define (fn-for-loc loc)
+  (cond [(empty? loc) (...)]
+        [else
+          (... (first loc)
+               (fn-for-loc (rest loc)))]))
+
+;; Template rules used:
+;; - one of: 2 cases
+;; - atomic distinct: empty
+;; - reference: (first loc) is Collided
+;; - self-reference: (rest loc) is ListofCollided
 
 ;; ===========
 ;; Functions:
@@ -202,26 +221,43 @@
 ;;      delete on enemies -> new enemy list
 ;;      delete on bullets -> new bullets list
 ;;      create a new state according to new list
+
+;(define (advance_handler g)
+;  (cond [(check_if_a_bullet_collided 
+;           (game-enemies g) 
+;           (spaceship-bullets (game-spaceship g)))
+;         (create_new_state 
+;           (game-spaceship g)
+;           (remove_from_game 
+;             (create_delete_list ())
+;             (game-enemies g) 
+;             (spaceship-bullets (game-spaceship g)))
+;           (game-si g))]
+;        [else
+;          (make-game (advance_spaceship (game-spaceship g)) 
+;                     (advance_enemies (game-enemies g) (game-si g)) 
+;                     (spawn_interval (game-si g)))]))               
+
 (define (advance_handler g)
-  (cond [(check_if_a_bullet_collided 
-           (game-enemies g) 
-           (spaceship-bullets (game-spaceship g)))
-         (create_new_state 
-           (game-spaceship g)
-           (remove_from_game 
-             (create_delete_list ())
-             (game-enemies g) 
-             (spaceship-bullets (game-spaceship g)))
-           (game-si g))]
-        [else
-          (make-game (advance_spaceship (game-spaceship g)) 
-                     (advance_enemies (game-enemies g) (game-si g)) 
-                     (spawn_interval (game-si g)))]))               
+  (make-game (advance_spaceship (game-spaceship g)) 
+             (advance_enemies (game-enemies g) (game-si g)) 
+             (spawn_interval (game-si g))))               
 
-;; ListOfEnemy ListOfBullet -> NewList
-;; produce the new list by removing colliding bullets and enemies
+;; check: first check if a bullet and an enemy collided
+;; bullets enemies -> get the coordinates of the collided and create alist using remove_from_game function
+;; list -> using the list as (make-toberemoved enemy bullet)
+;; create new state local functions that creates a new list by removing the current
 
+;; ListOfEnemy ListOfBullet -> ListofCollided
+;; produce a list of Enemy-Bullet pairs to be deleted
+(check-expect (remove_from_game (cons (make-enemy 100 100 1) empty) (cons (make-bullet 100 100) empty)) 
+              (cons (make-collided (make-enemy 100 100 1) (make-bullet 100 100)) empty))
 
+(define (remove_from_game loe lob)
+  (for ([i loe]) 
+    (for ([j loe]) 
+      (cond [(compare i j)
+             (make-collided i j)]))))
 
 ;; Spaceship NewList Interval -> SpaceInvaders
 ;; remove collided bullets and enemies from respective lists and new game state
@@ -233,8 +269,6 @@
                (nlist-lob nl))
              (nlist-loe nl)
              si))
-
-
 
 ;; ListOfEnemy ListOfBullet -> Boolean
 ;; produce true if the x, y coordinates of a bullet on the list hits an enemy
