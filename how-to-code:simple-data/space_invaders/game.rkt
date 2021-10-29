@@ -1,6 +1,3 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname game) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require 2htdp/image)
 (require 2htdp/universe)
 
@@ -143,27 +140,29 @@
 ;; Template rules used: 
 ;; - compound: 2 fields
 
-(define-struct collided (e b))
-;; Collided pari is (make-collided Enemy Bullet)
-;; interp. a data type that consists of collided Enemy-Bullet pair
-(define C0 (make-collided (make-enemy 100 100 1) (make-bullet 100 100)))
-(define C1 (make-collided (make-enemy 200 100 1) (make-bullet 200 100)))
+(define-struct collision (x y))
+;; Coordinates is (make-collision (Natural Natural))
+;; interp. x and y coordinates of where collision happened.
+(define C0 (make-collision 100 100))
+(define C1 (make-collision 200 200))
 
 #;
-(define (fn-for-c c)
-  (... (collided-e c)                   ; Enemy
-       (collided-b c)))                 ; Bullet
+(define (fn-for-collision c)
+  (... (collision-x c)
+       (collision-y c)))
 
-;; Template rules used: 
+;; Template rules used:
 ;; - compound: 2 fields
 
-;; ListofCollided is one of:
+;; ListOfCoordinates is one of:
 ;; - empty
-;; (cons Collided ListofCollided)
+;; (cons Coordinates ListOfCoordinatesjo)
+;; interp. a list of Coordinates compound of where collision happened.
 (define LOC0 empty)
-(define LOC1 (cons C0 empty))
+(define LOC1 (cons C1 empty))
+(define LOC2 (cons C0 (cons C1 empty)))
 
-#;
+#; 
 (define (fn-for-loc loc)
   (cond [(empty? loc) (...)]
         [else
@@ -173,8 +172,8 @@
 ;; Template rules used:
 ;; - one of: 2 cases
 ;; - atomic distinct: empty
-;; - reference: (first loc) is Collided
-;; - self-reference: (rest loc) is ListofCollided
+;; - reference: (first loc) is Coordinates
+;; - self-reference: (rest loc) is ListOfCoordinates
 
 ;; ===========
 ;; Functions:
@@ -214,61 +213,107 @@
 ;(define (advance_handler g) g)       ; stub
 ; <template from SpaceInvaders>
 
-;; !!! Create a condition where it checks whether a a bullet and an enemy collides
-;; create a function that checks
-;; delete both the enemy and the bullet
-;;      first create a list of the coordinates to delete
-;;      delete on enemies -> new enemy list
-;;      delete on bullets -> new bullets list
-;;      create a new state according to new list
-
-;(define (advance_handler g)
-;  (cond [(check_if_a_bullet_collided 
-;           (game-enemies g) 
-;           (spaceship-bullets (game-spaceship g)))
-;         (create_new_state 
-;           (game-spaceship g)
-;           (remove_from_game 
-;             (create_delete_list ())
-;             (game-enemies g) 
-;             (spaceship-bullets (game-spaceship g)))
-;           (game-si g))]
-;        [else
-;          (make-game (advance_spaceship (game-spaceship g)) 
-;                     (advance_enemies (game-enemies g) (game-si g)) 
-;                     (spawn_interval (game-si g)))]))               
-
 (define (advance_handler g)
-  (make-game (advance_spaceship (game-spaceship g)) 
-             (advance_enemies (game-enemies g) (game-si g)) 
-             (spawn_interval (game-si g))))               
+  (cond [(check_if_a_bullet_collided 
+           (game-enemies g) 
+           (spaceship-bullets (game-spaceship g)))
+         (create_new_state 
+           g 
+           (get_coordinates (game-enemies g) 
+                            (spaceship-bullets (game-spaceship g))))]
+        [else
+          (make-game (advance_spaceship (game-spaceship g)) 
+                     (advance_enemies (game-enemies g) (game-si g)) 
+                     (spawn_interval (game-si g)))]))               
 
-;; check: first check if a bullet and an enemy collided
-;; bullets enemies -> get the coordinates of the collided and create alist using remove_from_game function
-;; list -> using the list as (make-toberemoved enemy bullet)
-;; create new state local functions that creates a new list by removing the current
+;; ListOfEnemy ListOfBullet -> ListOfCoordinates
+;; produce a list of coordinates where the collision between enemy and bullet happened.
+(check-expect (get_coordinates (cons (make-enemy 100 100 1) empty) (cons (make-bullet 100 100) empty))
+              (cons (make-collision 100 100) empty))
 
-;; ListOfEnemy ListOfBullet -> ListofCollided
-;; produce a list of Enemy-Bullet pairs to be deleted
-(check-expect (remove_from_game (cons (make-enemy 100 100 1) empty) (cons (make-bullet 100 100) empty)) 
-              (cons (make-collided (make-enemy 100 100 1) (make-bullet 100 100)) empty))
+(check-expect (get_coordinates (cons (make-enemy 100 100 1) (cons (make-enemy 200 200 1) empty)) (cons (make-bullet 200 200) (cons (make-bullet 100 100) empty)))
+              (cons (make-collision 100 100) (cons (make-collision 200 200) empty)))
 
-(define (remove_from_game loe lob)
-  (for ([i loe]) 
-    (for ([j loe]) 
-      (cond [(compare i j)
-             (make-collided i j)]))))
+;(define (get_coordinates loe lob) loc)   ; stub
 
-;; Spaceship NewList Interval -> SpaceInvaders
+(define (get_coordinates loe lob)
+  (cond [(empty? loe) empty]
+        [else
+          (if (check_if_x_is_near (first loe) lob) 
+            (cons (make-collision (enemy-x (first loe)) (enemy-y (first loe)))
+                  (get_coordinates (rest loe) lob))
+            (get_coordinates (rest loe) lob))]))
+
+;; SpaceInvaders ListOfCoordinates -> SpaceInvaders
 ;; remove collided bullets and enemies from respective lists and new game state
-(define (create_new_state ss nl si)
+
+(define (create_new_state g cl)
   (make-game 
              (make-spaceship 
-               (spaceship-x ss) 
-               (spaceship-dir ss)
-               (nlist-lob nl))
-             (nlist-loe nl)
-             si))
+               (spaceship-x (game-spaceship g)) 
+               (spaceship-dir (game-spaceship g))
+               (remove_from_bullets cl (spaceship-bullets (game-spaceship g))))
+             (remove_from_enemies cl (game-enemies g))
+             (game-si g)))
+
+
+;; ListOfCoordinates ListOfEnemy -> ListOfEnemy
+;; remove all enemies from ListOfEnemy that has it's coordinates near an item in ListOfCoordinates.
+(check-expect (remove_from_enemies (cons (make-collision 100 100) empty) 
+                                   (cons (make-enemy 100 100 1) (cons (make-enemy 200 200 1) empty)))
+              (cons (make-enemy 200 200 1) empty))
+
+(check-expect (remove_from_enemies (cons (make-collision 100 100) (cons (make-collision 200 200) empty)) 
+                                   (cons (make-enemy 100 100 1) (cons (make-enemy 200 200 1) empty)))
+              empty)
+
+;(define (remove_from_enemies loc loe) loe) ;stub
+(define (remove_from_enemies loc loe)
+  (cond [(empty? loe) empty]
+        [(empty? loc) loe]
+        [else
+          (cond [(compare_c_e (first loc) (first loe))
+                 (remove_from_enemies (rest loc) (rest loe))]
+                [else
+                  (cons (first loe)
+                        (remove_from_enemies loc (rest loe)))])]))
+
+;; ListOfCoordinates ListOfBullet -> ListOfBullet
+;; remove all bullets from ListOfBullets that has it's coordinates near an item in ListOfCoordinates.
+(check-expect (remove_from_bullets (cons (make-collision 100 100) empty) 
+                                   (cons (make-bullet 100 100) (cons (make-bullet 200 200) empty)))
+              (cons (make-bullet 200 200) empty))
+
+(check-expect (remove_from_bullets (cons (make-collision 100 100) (cons (make-collision 200 200) empty)) 
+                                   (cons (make-bullet 100 100) (cons (make-bullet 200 200) empty)))
+              empty)
+
+;(define (remove_from_bullets loc lob) lob) ;stub
+(define (remove_from_bullets loc lob)
+  (cond [(empty? lob) empty]
+        [(empty? loc) lob]
+        [else
+          (cond [(compare_c_b (first loc) (first lob))
+                 (remove_from_bullets (rest loc) (rest lob))]
+                [else
+                  (cons (first lob)
+                        (remove_from_bullets loc (rest lob)))])]))
+
+;; Collision Bullet -> Boolean
+;; produces true if Bullet coordinates is near Collision coordinates
+
+(define (compare_c_b c b)
+  (and (<= (collision-y c) (+ (image-width ENEMY) (bullet-y b))) 
+       (<= (- (collision-x c) (image-width ENEMY))
+           (bullet-x b)
+           (+ (collision-x c) (image-width ENEMY)))))
+
+;; Collision Enemy -> Boolean
+;; produce true if Collision coordinates is equal to enemy's coordinates:w
+
+(define (compare_c_e c e)
+  (and (equal? (collision-y c) (enemy-y e)) 
+       (equal? (collision-x c) (enemy-x e))))
 
 ;; ListOfEnemy ListOfBullet -> Boolean
 ;; produce true if the x, y coordinates of a bullet on the list hits an enemy
@@ -318,7 +363,7 @@
 (check-expect (compare (make-bullet 205 200) (make-enemy 200 200 1)) true)
 
 (define (compare b e)
-  (and (equal? (bullet-y b) (enemy-y e)) 
+  (and (<= (bullet-y b) (+ (image-width ENEMY) (enemy-y e))) 
        (<= (- (enemy-x e) (image-width ENEMY))
            (bullet-x b)
            (+ (enemy-x e) (image-width ENEMY)))))
