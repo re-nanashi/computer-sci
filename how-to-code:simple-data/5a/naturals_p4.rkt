@@ -35,3 +35,9 @@
         [else
           (overlay (circle (* 10 n) "outline" c)
                    (draw (sub1 n) c))]))
+
+(define (draw n c)
+  (cond [(zero? n) empty-image]
+        [else
+          (overlay (circle (* 10 n) "outline" c)
+                   (draw (sub1 n) c))]))

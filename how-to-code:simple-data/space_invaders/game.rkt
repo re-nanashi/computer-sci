@@ -259,11 +259,11 @@
 
 ;; ListOfCoordinates ListOfEnemy -> ListOfEnemy
 ;; remove all enemies from ListOfEnemy that has it's coordinates near an item in ListOfCoordinates.
-(check-expect (remove_from_enemies (cons (make-collision 100 100) empty) 
+(check-expect (remove_from_enemies (cons (make-collision 100 100) empty)
                                    (cons (make-enemy 100 100 1) (cons (make-enemy 200 200 1) empty)))
               (cons (make-enemy 200 200 1) empty))
 
-(check-expect (remove_from_enemies (cons (make-collision 100 100) (cons (make-collision 200 200) empty)) 
+(check-expect (remove_from_enemies (cons (make-collision 100 100) (cons (make-collision 200 200) empty))
                                    (cons (make-enemy 100 100 1) (cons (make-enemy 200 200 1) empty)))
               empty)
 
