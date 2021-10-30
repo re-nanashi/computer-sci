@@ -1,15 +1,7 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname mutual_p1) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require 2htdp/image)
 
 ;; =============
 ;; Constants:
-
-(define WIDTH 700)
-(define HEIGHT 400)
-(define X_SPACE 50)
-(define Y_SPACE 50)
 
 ;; =============
 ;; Data definitions:
@@ -81,24 +73,24 @@
 ;(define (get_total_size dir) 0)         ; stub
 
 (define (get_total_size d)
-  (if (empty? (dir-sub_dirs d)) 
-    (get_total_size_list (dir-images d)) 
-    (get_total_dir_size (dir-sub_dirs d))))         
+  (if (false? (get_total_dir_size (dir-sub_dirs d))) 
+    (get_total_size_list (dir-images d))
+    (get_total_dir_size (dir-sub_dirs d))))       
 
 ;; ListOfDir -> Integer or false
 ;; produce the total size of the images inside a directory.
 
 (define (get_total_dir_size lod)
-  (cond [(empty? lod) 0]
+  (cond [(empty? lod) false]
         [else
-          (if (not (empty? (get_total_size (first lod))))
-            (+ (get_total_size (first lod)) (get_total_dir_size (rest lod)))
+          (if (not (false? (get_total_size (first lod))))
+            (get_total_size (first lod))
             (get_total_dir_size (rest lod)))]))
 
 ;; ListOfImage -> Natural
 ;; given a list of images calculate the total size of all the images
-(check-expect (get_total_size_list (list I1 I2)) (+ 100 100))
-(check-expect (get_total_size_list (list I3)) (+ 0 182))
+(check-expect (list I1 I2) (+ 100 100))
+(check-expect (list I3) (+ 0 182))
 
 ;(define (get_total_size_list loi) 0)       ;stub
 
@@ -106,7 +98,7 @@
   (cond [(empty? loi) 0]
         [else
           (+   (get_size (first loi))
-               (get_total_size_list (rest loi)))]))
+               (fn-for-loi (rest loi)))]))
 
 ;; Image -> Natural
 ;; produce the size (* width height) of an image.
@@ -119,5 +111,4 @@
 (define (get_size img)
   (* (image-width img) (image-height img)))
 
-;; Render Directory
 
