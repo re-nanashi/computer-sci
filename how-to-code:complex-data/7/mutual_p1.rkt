@@ -11,6 +11,8 @@
 (define X_SPACE 50)
 (define Y_SPACE 50)
 
+(define MTS (rectangle WIDTH HEIGHT "solid" "white"))
+
 ;; =============
 ;; Data definitions:
 
@@ -119,5 +121,15 @@
 (define (get_size img)
   (* (image-width img) (image-height img)))
 
+;; ===================
 ;; Render Directory
+
+;; Directory -> Image
+;; ListOfDir -> Image
+;; ListOfImage -> Image
+;; render the images on the directory
+(check-expect ())
+
+(define (render_dir_img d) (empty-scene))       ; stub
+
 
