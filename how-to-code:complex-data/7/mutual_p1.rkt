@@ -120,16 +120,3 @@
 
 (define (get_size img)
   (* (image-width img) (image-height img)))
-
-;; ===================
-;; Render Directory
-
-;; Directory -> Image
-;; ListOfDir -> Image
-;; ListOfImage -> Image
-;; render the images on the directory
-(check-expect ())
-
-(define (render_dir_img d) (empty-scene))       ; stub
-
-
