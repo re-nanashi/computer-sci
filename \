@@ -18,7 +18,7 @@
 (define (negative-only lon)
   (filter2 lon negative?))
 
-;; (X -> Boolean) (listof X) -> (listof X)
+;; (listof X) (X -> Boolean) -> (listof X)
 ;; given a list and a fn, call fn to all items on the list.
 (check-expect (filter2 empty negative?) empty)
 (check-expect (filter2 (list 1 -2 3 -4) positive?) (list 1 3))
@@ -31,3 +31,5 @@
             (cons (first lon)
                   (filter2 (rest lon) fn))
             (filter2 (rest lon) fn))]))
+
+
