@@ -136,3 +136,24 @@
   (local [(define (pred act)
             (odd? (string-length (node-name act))))]
     (remove_abstract act pred)))
+
+;; (Natural String Integer Z Z -> Z) Z Accounts -> Z
+;; the fold function for Accounts.
+
+(define (fold_act c b t)
+  (cond [(false? t) b]
+        [else
+          (c (node-id t)
+             (node-name t)
+             (node-bal t)
+             (fold_act (node-l t))
+             (fold_act (node-r t)))]))
+
+;; Accounts -> Accounts
+;; Deduct 3 CAD monthly fee from every account.
+
+;; <template from fold_act>
+(define (charge_fee act)
+  (local [(define (c id name balance rl rr)
+            (make-node id name (- balance 3) rl rr))]
+    (fold_act c false act)))

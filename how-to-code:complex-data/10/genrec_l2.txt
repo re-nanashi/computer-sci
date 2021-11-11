@@ -1,0 +1,40 @@
+Stri function: 
+
+Base Case:
+    (<= s CUTOFF)
+
+Reduction Step: 
+    (/ s 2)
+
+Argument that repeated application of reduction step will eventually 
+reach the base case:
+    As long as the cutoff is > 0 and s starts >= 0, 
+    repeated division by 2 will eventually be less than the cutoff.
+
+Scar function:
+Base Case:
+    (<= s CUTOFF)
+
+Reduction Step:
+    (/ s 3)
+
+Argument that repeated application of reduction step will eventually 
+reach the base case:
+    As long as the cutoff is > 0 and s starts >= 0, repeated division by 3
+    will eventually be less than the cutoff.
+
+Hailstones function:
+Base Case:
+    (= n 1)
+
+Reduction Step:
+    if n is odd, make n even by multiplying it by 3 then adding 1 (+ (* n 3) 1)
+    (/ n 2) when n is even
+
+Argument that repeated application of reduction step will eventually 
+reach the base case:
+    As long as n > 1, repeated division by 2 when n is even, 
+    and adding 1 to the product of n and 3 when n is odd to produce an even number,
+    n will eventually be equal to 1. 
+
+
