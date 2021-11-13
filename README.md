@@ -18,6 +18,7 @@
 - NodeJS
 - VimScript and some lua
 - Bash scripts
+- Racket
 
 
 ## TODO
