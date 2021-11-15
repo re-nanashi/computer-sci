@@ -306,6 +306,7 @@
 (check-expect (check_if_valid (fill_square BD4 1 6)) false)
 
 
+
 ;; Board Pos -> Val or false
 ;; produce value at given position on the given board.
 (check-expect (read_square BD2 (convert_to_pos 0 5)) 6)
