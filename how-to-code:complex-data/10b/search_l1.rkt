@@ -193,13 +193,12 @@
 ;; Generative -> Arbitray-arity tree -> Backtracking search
 ;; Assume: bd is valid
 ;; !!!
-;(check-expect (solve BD4) BD4s)
-;(check-expect (solve BD5) BD5s)
-;(check-expect (solve BD7) false)
+(check-expect (solve BD4) BD4s)
+(check-expect (solve BD5) BD5s)
+(check-expect (solve BD7) false)
 
 ;(define (solve bd) false)   ;stub
 
-#;
 (define (solve bd)
   (local [(define (solve__bd bd)
             (cond [(is_solved bd) bd]
@@ -212,9 +211,9 @@
                     (local [(define try (solve__bd (first lobd)))]
                      (if (not (false? try))
                        try 
-                       (solve__lobd (rest lobd))))]))]))
+                       (solve__lobd (rest lobd))))]))]
+    (solve__bd bd)))
 
-;; !!! is_solved
 ;; Board -> Boolean
 ;; produce true if Board is solved.
 ;; ASSUME: board is valid, so it is solved if it is full.
@@ -227,22 +226,17 @@
 (define (is_solved bd)
   (andmap (lambda (n) (not (false? n))) bd))
 
-;; !!! next_bds
 ;; Board -> (listof Board)
 ;; produce valid next boards from board.
-;; finds empty square, fills it with Natural[1, 9], keeps only valid boards
-;; then create new boards then search
-;; !!!
-;;(check-expect (next_bds (cons 1 (rest BD1)))
-;;              (list (cons 1 (cons 1 (rest (rest BD1))))
-;;                    (cons 1 (cons 2 (rest (rest BD1))))
-;;                    (cons 1 (cons 3 (rest (rest BD1))))
-;;                    (cons 1 (cons 4 (rest (rest BD1))))
-;;                    (cons 1 (cons 5 (rest (rest BD1))))
-;;                    (cons 1 (cons 6 (rest (rest BD1))))
-;;                    (cons 1 (cons 7 (rest (rest BD1))))
-;;                    (cons 1 (cons 8 (rest (rest BD1))))
-;;                    (cons 1 (cons 9 (rest (rest BD1))))))
+(check-expect (next_bds (cons 1 (rest BD1)))
+              (list (cons 1 (cons 2 (rest (rest BD1))))
+                    (cons 1 (cons 3 (rest (rest BD1))))
+                    (cons 1 (cons 4 (rest (rest BD1))))
+                    (cons 1 (cons 5 (rest (rest BD1))))
+                    (cons 1 (cons 6 (rest (rest BD1))))
+                    (cons 1 (cons 7 (rest (rest BD1))))
+                    (cons 1 (cons 8 (rest (rest BD1))))
+                    (cons 1 (cons 9 (rest (rest BD1))))))
 
 ;(define (next_bds bd) empty)    ; stub
 (define (next_bds bd)
@@ -286,8 +280,8 @@
 
 ;(listof Board) -> (listof Board)
 ;; produce list containing only valid boards
-;; !!!
-(check-expect (keep_only_valid (cons 1 (cons 1 (rest (rest BD1))))) empty)
+(check-expect (keep_only_valid (list (cons 1 (cons 1 (rest (rest BD1)))))) empty)
+(check-expect (keep_only_valid (list BD1 (cons 1 (cons 1 (rest (rest BD1)))))) (list BD1))
 
 ;(define (keep_only_valid lob) empty)    ; stub
 
@@ -305,10 +299,99 @@
 (check-expect (check_if_valid (cons 2 (rest BD3))) false)
 (check-expect (check_if_valid (fill_square BD4 1 6)) false)
 
+(define (check_if_valid bd)
+  (local [(define (handle_check n)
+            (check_if_unit_is_twice n bd))]
+    (andmap handle_check (build-list 81 identity))))
 
+;; Natural[0 80] Board -> Boolean
+;; produce true if the value at the current position does not have the same value inside it's list.
+(check-expect (check_if_unit_is_twice 0 (cons 2 (rest BD2))) false)
+
+(check-expect (check_if_unit_is_twice 0 BD2) true)
+
+(check-expect (check_if_unit_is_twice 0 BD4s) true)
+(check-expect (check_if_unit_is_twice 80 BD5s) true)
+(check-expect (check_if_unit_is_twice 80 BD4s) true)
+(check-expect (check_if_unit_is_twice 0 (cons 2 (rest BD3))) false)
+
+(define (check_if_unit_is_twice pos bd)
+  (and (check_row pos bd)
+       (check_col pos bd)
+       (check_box pos bd)))
+
+;; Pos Board -> Boolean
+;; produce true if Pos' value does not have the same value on the same row.
+(check-expect (check_col 0 BD4s) true)
+(check-expect (check_box 0 BD4s) true)
+(check-expect (check_row 0 BD4s) true)
+(check-expect (check_col 0 BD4) true)
+(check-expect (check_col 0 (cons 1 (rest BD4s))) false)
+
+(define (check_row pos bd)
+  (abstract_check pos bd ROWS))
+
+(define (check_col pos bd)
+  (abstract_check pos bd COLS))
+
+(define (check_box pos bd)
+  (abstract_check pos bd BOXES))
+
+(define (abstract_check pos bd unit)
+  (check_if_twice (read_square bd pos)
+                  (convert_to_values (get_list pos unit) bd)))
+
+;; Val (listof Val) -> Boolean
+;; produce true if there are no 2 instances of Val in (listof Val)
+(check-expect (check_if_twice 2 (list 2 1 6 3 9 7 4 5 8)) true)
+(check-expect (check_if_twice 1 (list 2 1 6 3 9 7 4 5 8)) true)
+(check-expect (check_if_twice 2 (list 2 2 6 3 9 7 4 5 8)) false)
+(check-expect (check_if_twice 6 (list 2 6 6 3 9 7 4 5 8)) false)
+(check-expect (check_if_twice false (list 2 false 6 3 9 7 4 5 8)) true)
+
+(define (check_if_twice n lon)
+  (local [(define (pred v) 
+            (equal? v n))]
+    (if (false? n)
+      true
+      (< (count pred lon) 2))))
+
+;; (listof Pos) -> (listof Val)
+;; Convert the a list of positions that was converted to it's values 
+(check-expect (convert_to_values (list 0 9 18 27 36 45 54 63 72) BD4s) (list 2 1 6 3 9 7 4 5 8))
+(check-expect (convert_to_values (list 0 9 18 27 36 45 54 63 72) BD4) (list 2 1 6 B B 7 4 B 8))
+
+(define (convert_to_values lst bd)
+  (local [(define (fn pos)
+            (read_square bd pos))]
+    (map fn lst)))
+
+;; Pos (listof (listof Pos)) -> (listof Pos)
+;; produce the list where Pos is an item of.
+(check-expect (get_list 27 COLS) (list 0  9 18 27 36 45 54 63 72))
+(check-expect (get_list 27 ROWS) (list 27 28 29 30 31 32 33 34 35))
+(check-expect (get_list 27 BOXES) (list 27 28 29 36 37 38 45 46 47))
+
+(define (get_list pos lst)
+  (cond [(empty? lst) (error "Error. pos should be inside the list.")]
+        [else
+          (if (search pos (first lst))
+            (first lst)
+            (get_list pos (rest lst)))]))
+
+;; Pos (listof Pos) -> Boolean 
+;; produce true if Pos is a part of the list.
+(define (search pos lst)
+  (cond [(empty? lst) false]
+        [else
+          (local [(define mid (floor (/ (length lst) 2))) 
+                  (define mid_val (list-ref lst mid))]
+            (cond [(= pos mid_val) true]
+                  [(< pos mid_val) (search pos (take lst mid))]
+                  [(> pos mid_val) (search pos (drop lst (add1 mid)))]))]))
 
 ;; Board Pos -> Val or false
-;; produce value at given position on the given board.
+;; produce the value at given position on the given board.
 (check-expect (read_square BD2 (convert_to_pos 0 5)) 6)
 (check-expect (read_square BD3 (convert_to_pos 7 0)) 8)
 
