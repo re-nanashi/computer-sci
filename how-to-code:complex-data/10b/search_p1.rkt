@@ -64,6 +64,13 @@
         0 B 0 B B
         B B 0 0 G))
 
+(define MZ5
+  (list C B 0 0 0
+        B B B B 0
+        0 B 0 0 0
+        0 B 0 B B
+        B B 0 0 G))
+
 ;; ============
 ;; Functions:
 
@@ -74,6 +81,7 @@
 (check-expect (check_maze MZ2) true)
 (check-expect (check_maze MZ3) true)
 (check-expect (check_maze MZ4) false)
+(check-expect (check_maze MZ5) false)
 
 ;(define (check_maze mz) false) ; stub
 
@@ -128,12 +136,14 @@
 (define (find_next_steps mz)
   (local [(define current_pos (index-of mz C))
           (define next_step_list 
-            (cond [(not (false? (member current_pos RIGHT_EDGE))) 
-                   (list (+ current_pos 5))]
-                  [(not (false? (member current_pos BOTTOM_EDGE))) 
-                   (list (+ current_pos 1))]
-                  [else
-                    (list (+ current_pos 1) (+ current_pos 5))]))
+            (local [(define (check_if_current_member lst) 
+                      (not (false? (member current_pos lst))))]
+              (cond [(check_if_current_member RIGHT_EDGE) 
+                     (list (+ current_pos 5))]
+                    [(check_if_current_member BOTTOM_EDGE) 
+                     (list (+ current_pos 1))]
+                    [else
+                      (list (+ current_pos 1) (+ current_pos 5))])))
           (define (valid p) (not (false? (read_pos mz p))))]
     (filter valid next_step_list)))
 
