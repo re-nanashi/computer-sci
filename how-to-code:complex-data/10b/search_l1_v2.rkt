@@ -302,11 +302,9 @@
 (define (check_if_valid bd)
   (local [(define (convert_unit bd)
             (map (lambda (x) (convert_to_values x bd)) UNITS))
-
           (define (filter_unit unit)
             ;; x is first list to filter
-            (map (lambda (x) (filter (lambda (v) (integer? v)) x)) unit))
-
+            (map (lambda (lst) (filter (lambda (x) (integer? x)) lst)) unit))
           (define (duplicate? unit)
             (false? (check-duplicates unit)))]
     (andmap duplicate? (filter_unit (convert_unit bd)))))
