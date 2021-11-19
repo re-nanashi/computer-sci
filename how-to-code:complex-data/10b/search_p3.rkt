@@ -41,4 +41,5 @@
 
 (define B false)    ; B stands for blank
 
-;; !!! Create a function that generates a list 
+;; !!! Create a function that generates a list of n^2
+;; !!! 
