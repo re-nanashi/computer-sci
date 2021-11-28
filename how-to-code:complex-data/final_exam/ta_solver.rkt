@@ -1,3 +1,7 @@
+(require racket/list)
+
+;; PROBLEM 1:
+
 ;; Data Definitions:
 
 (define-struct chirper (name verified following))
@@ -127,6 +131,8 @@
                                     follower_count)]))]
     (fn-for-chirper c0 empty empty empty)))
 
+;; PROBLEM 2:
+
 ;; Slot is Natural
 ;; interp. each TA slot has a number, is the same length, and none overlap
 
@@ -134,8 +140,8 @@
 ;; TA is (make-ta String Natural (listof Slot))
 ;; interp. the TA's name, number of slots they can work, and slots they're available for
 
-(define SOBA (make-ta "Soba" 2) (list 1 3))
-(define UDON (make-ta "Udon" 1) (list 3 4))
+(define SOBA (make-ta "Soba" 2 (list 1 3)))
+(define UDON (make-ta "Udon" 1 (list 3 4)))
 (define RAMEN (make-ta "Ramen" 1 (list 2)))
 
 (define NOODLE_TAs (list SOBA UDON RAMEN))
@@ -149,13 +155,15 @@
 ;; Functions
 ;; (listof TA) (listof Slot) -> Schedule or false
 ;; produce valide schedule given TAs and Slots; false if impossible
+
 (check-expect (schedule_tas empty empty) empty)
 (check-expect (schedule_tas empty (list 1 2)) false)
 (check-expect (schedule_tas (list SOBA) empty) empty)
+
 (check-expect (schedule_tas (list SOBA UDON) (list 1 3 4)) 
-              (list (make-assignment UDON 4) 
-                    (make-assignment SOBA 3) 
-                    (make-assignment SOBA 1)))
+            (list (make-assignment UDON 4) 
+                  (make-assignment SOBA 3) 
+                  (make-assignment SOBA 1)))
 
 (check-expect (schedule_tas (list SOBA) (list 1))
               (list (make-assignment SOBA 1)))
@@ -173,39 +181,61 @@
 (check-expect (schedule_tas NOODLE_TAs (list 1 2 3 4 5)) false)
 
 ;(define (schedule_tas tas slots) empty) ;stub
-;; !!! next_los
-;; next_los should create a list of assignemnts using tail recursion and accumulator 
-;; next_los should be able to generate valid list of assignments from ( (list 1 3 4)) empty 
-;; (list 3 4) (list of assignments with all 1 )
 
-;; !!! solved? 
-
-
-;<template: recursion, tail recursion, encapsulate w/ local 
+;<template: structural recursion, encapsulate w/ local>
 
 (define (schedule_tas tas slots)
-  (local [
-          ;; (slot=empty)
-          ;; find until length of slot is equal to length of the given slots (list) << this
-          ;; find the the next step or the next move  << the problem
-          ;; fill it with available ta slot
-          ;; keep only valid from list
-          (define (next_los slot0)
-            (local [
-                    (define (next_los slot))]
+  (local [;; (list (listof Assignment)) -> (list (listof Assignment))
+          ;; filter the list, by removing schedules that have their ta's availability greater than max
+          (define (keep_only_valid los)
+            (local [(define (count_instances ta s)
+                      (count (lambda (as) (equal? ta (assignment-ta as))) s))
 
-              (next_los slot0 )))
+                    (define (only_available_tas s)
+                      (andmap (lambda (ta) (<= (count_instances ta s) 
+                                               (ta-max ta))) tas))]
+              (filter only_available_tas los)))
 
-          (define (fn-for-slots slot)
-            (cond [(solved? slot) slot]
+          ;; Natural (listof Assignment) -> (list (listof Assignment))
+          ;; generate possible list of assignments 
+          (define (gen_for_next_slot slot_n loa)
+            (local [(define available_tas 
+                      (filter (lambda (ta) (member slot_n (ta-avail ta))) 
+                              tas))]
+              (map (lambda (ta) (cons (make-assignment ta slot_n) loa)) 
+                   available_tas)))
+
+          ;; (listof Assignment) -> Slot
+          ;; produce the slot to generate next
+          (define (find_next_slot loa)
+            (list-ref slots (length loa)))
+
+          ;; (listof Assignment) -> (listof (listof Assignment))
+          ;; given a list of assignments, generate probable schedules 
+          ;; by filling the list with available tas.
+          (define (next_lloa loa tas slots)
+            (keep_only_valid (gen_for_next_slot (find_next_slot loa) loa)))
+
+          ;; (listof Assignment) -> Boolean
+          ;; produce true if schedule is valid
+          (define (solved? loa)
+            (= (length loa) (length slots)))
+
+          ;; (listof Assignment) -> (listof Assignment)
+          ;; given an empty list of assignments produce a valid list of assignments according
+          ;; according to the given tas schedule and (listof Slot)
+          (define (fn-for-loa loa)
+            (cond [(solved? loa) loa]
                   [else
-                    (fn-for-los (next_los slot))]))
+                    (fn-for-lloa (next_lloa loa tas slots))]))
 
-          (define (fn-for-los los)
-            (cond [(empty? los) false]
+          ;; (listof (listof Assignment)) -> (listof Assignment) or false
+          ;; produce (listof Assignment) or false if list is not valid.
+          (define (fn-for-lloa lloa)
+            (cond [(empty? lloa) false]
                   [else
-                    (local [(define try (fn-for-slots (first los)))]
+                    (local [(define try (fn-for-loa (first lloa)))]
                       (if (not (false? try))
                         try
-                        (fn-for-los (rest los))))]))]
-    (fn-for-slots empty)))
+                        (fn-for-lloa (rest lloa))))]))]
+    (fn-for-loa empty)))
