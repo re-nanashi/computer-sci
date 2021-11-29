@@ -2,7 +2,7 @@
 
 ## What is it for ?
 
-✅ Serves as a repository for all my computer science ventures and code.
+✅ Serves as a repository for ossu's core programming courses.
 
 ✅ Will also serve as a journal to reflect on.
 
@@ -16,19 +16,23 @@
 - Beginner Typescript 
 - HTML/CSS
 - NodeJS
-- VimScript and some lua
-- Bash scripts
+- VimScript 
+- Simple Bash scripts
 - Racket
 
 
-## TODO
+## Current Course
 
-- Learn How to code: Simple Data
+- Programming Languages: Part A
 
+## Finished Courses
+
+- How to code: Simple Data
+- How to code: Complex Data
 
 ## Note
 
-**This service was created for personal use. It is not meant to be for commercial or business purposes.**
+**This service or repository was created for personal use. It is not meant to be for commercial or business purposes.**
 
 ## Author
 
