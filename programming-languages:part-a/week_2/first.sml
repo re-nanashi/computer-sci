@@ -24,4 +24,16 @@ val abs_of_z = if z < 0
  
 val abs_of_z_simpler = abs z;
 
+fun pow_helper(x : int, y : int, acc : int) =
+  if y = 0 
+  then acc
+  else pow_helper(x, (y - 1), (x * acc))
+
+fun pow(x: int, y: int) = 
+  pow_helper(x, y, 1)
+
+val test1 = pow(3,2) = 9
+
+fun cube(x : int) = 
+  pow(x, 3)
 
