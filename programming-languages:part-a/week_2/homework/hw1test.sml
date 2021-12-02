@@ -1,4 +1,5 @@
-use "hw1.sml";
+use "programming-languages:part-a/week_2/homework/hw1.sml";
+
 (* Homework1 Simple Test *)
 (* These are basic test cases. Passing these tests does not guarantee that your code will pass the actual homework grader *)
 (* To run the test, add a new line to the top of this file: use "homeworkname.sml"; *)

@@ -95,4 +95,61 @@ fun oldest (dates: (int * int * int) list) =
            end
     in SOME(oldest_nonempty(dates))
     end
-             
+
+fun is_a_member_of(x : int, xs : int list) =
+  if null xs
+  then false
+  else x = (hd xs) orelse is_a_member_of(x, tl xs)
+
+fun number_in_months_challenge (dates : (int * int * int) list, months : int list) =
+  let fun number_in_months_helper (months : int list, seen : int list, counter : int) = 
+        if null months 
+        then counter 
+        else if is_a_member_of((hd months), seen)
+        then
+          number_in_months_helper(tl months, seen, counter)
+        else
+          number_in_months_helper(tl months, hd months :: seen, counter + number_in_month(dates, hd months))
+  in number_in_months_helper(months, [], 0)
+  end
+
+fun dates_in_months_challenge (dates : (int * int * int) list, months : int list) =
+  let fun dates_in_months_helper (months : int list, seen: int list, new_list : (int * int * int) list) = 
+        if null months
+        then new_list
+        else if is_a_member_of((hd months), seen)
+        then
+          dates_in_months_helper(tl months, seen, new_list)
+        else
+          dates_in_months_helper(tl months, (hd months) :: seen, new_list @ dates_in_month(dates, hd months))
+  in dates_in_months_helper(months, [], [])
+  end
+
+fun reasonable_date(date : (int * int * int)) =
+  let fun is_month_valid (month : int) =
+        1 <= month andalso month <= 12
+
+      fun is_year_valid (year : int) =
+        0 < year
+
+      fun is_day_valid (year : int, month : int, day : int) =
+        let fun no_of_days_in_month (year : int, month : int) =
+              let val is_leap_year = (year mod 4 = 0) andalso 
+                                    ((year mod 400 = 0) orelse  (year mod 100 <> 0))
+                  val february = if is_leap_year then 29 else 28
+                  val days_in_a_month = [31,february,31,30,31,30,31,31,30,31,30,31]
+
+                  fun get_days (month : int, list_of_months : int list) = 
+                    if month = 1
+                    then hd list_of_months
+                    else get_days(month - 1, tl list_of_months)
+              in 
+                get_days(month, days_in_a_month)
+              end
+        in 1 <= day andalso day <= no_of_days_in_month(year, month)
+        end
+
+  in is_month_valid(#2 date) andalso 
+     is_year_valid(#1 date) andalso  
+     is_day_valid(#1 date, #2 date, #3 date)
+  end
