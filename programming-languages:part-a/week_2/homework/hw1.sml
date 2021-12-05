@@ -26,13 +26,21 @@ fun number_in_months (dates : (int * int * int) list, months : int list) =
   in number_in_months_helper(months, 0)
   end
 
+fun rev xs =
+  let fun rev_helper(xs, acc) =
+        case xs of 
+             [] => acc
+           | x::xs' => rev_helper(xs', x :: acc)
+  in rev_helper(xs, [])
+  end
+
 fun dates_in_month (dates : (int * int * int) list, month : int) =
   let fun dates_in_month_helper (dates : (int * int * int) list, 
     new_list : (int * int * int) list) =
         if null dates
-        then new_list
+        then rev new_list
         else if (#2 (hd dates)) = month
-        then dates_in_month_helper(tl dates, new_list @ [hd dates])
+        then dates_in_month_helper(tl dates, hd dates :: new_list)
         else dates_in_month_helper(tl dates, new_list)
   in dates_in_month_helper(dates, [])
   end
@@ -41,10 +49,9 @@ fun dates_in_months (dates : (int * int * int) list, months : int list) =
   let fun dates_in_months_helper (months : int list, 
     new_list : (int * int * int) list) =
         if null months
-        then new_list
+        then rev new_list
         else 
-          dates_in_months_helper(tl months, new_list @ dates_in_month(dates, hd
-          months))
+          dates_in_months_helper(tl months, dates_in_month(dates, hd months) @ new_list)
   in dates_in_months_helper(months, [])
   end
 
@@ -116,12 +123,13 @@ fun number_in_months_challenge (dates : (int * int * int) list, months : int lis
 fun dates_in_months_challenge (dates : (int * int * int) list, months : int list) =
   let fun dates_in_months_helper (months : int list, seen: int list, new_list : (int * int * int) list) = 
         if null months
-        then new_list
+        then rev new_list
         else if is_a_member_of((hd months), seen)
         then
           dates_in_months_helper(tl months, seen, new_list)
         else
-          dates_in_months_helper(tl months, (hd months) :: seen, new_list @ dates_in_month(dates, hd months))
+          dates_in_months_helper(tl months, (hd months) :: seen,
+          dates_in_month(dates, hd months) @ new_list)
   in dates_in_months_helper(months, [], [])
   end
 
