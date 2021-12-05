@@ -73,3 +73,56 @@ fun zip (list1 : int list, list2 : int list) =
         else zip_helper (tl list1, tl list2, c_list @ [(hd list1, hd list2)])
   in zip_helper (list1, list2, [])
   end
+
+fun zipRecycle list_double = 
+  let val (l1, l2) = list_double
+      fun zip_helper list_double = 
+        case list_double of
+             (_, []) => []
+           | ([], l2) => zip_helper(l1, l2) 
+           | (hd1::tl1, hd2::tl2) => (hd1, hd2) :: zip_helper(tl1, tl2)
+  in 
+    zip_helper list_double
+  end
+
+fun lookup losi_s =
+  case losi_s of
+       ([], _) => NONE
+     | ((s,i)::tl, str) => if s = str then SOME i else lookup(tl, str)
+
+fun splitup lon = 
+  case lon of
+       [] => ([], [])
+     | (hd::tl) => let val (l1, l2) = splitup tl
+                   in 
+                     case hd >= 0 of
+                          true => (hd::l1, l2)
+                        | _ => (l1, hd::l2)
+                   end
+
+fun isSorted xs =
+  case xs of 
+       [] => true
+     | _::[] => true
+     | (head::(neck::rest)) => head <= neck andalso isSorted(neck::rest)
+
+fun isAnySorted xs =
+  case xs of 
+       [] => true
+     | _::[] => true
+     | (head::(neck::rest)) => 
+         let val increasing = head > neck 
+         in case increasing of 
+                true => head <= neck andalso isAnySorted(neck::rest)
+              | _ => head >= neck andalso isAnySorted(neck::rest)
+         end
+fun sortedMerge double_list =
+  case double_list of
+       ([], []) => []
+     | (ls, []) => ls
+     | ([], ls) => ls
+     | (hd1::tl1, hd2::tl2) => 
+         if hd1 < hd2 
+         then hd1 :: sortedMerge(tl1, hd2::tl2) 
+         else hd2 :: sortedMerge(hd1::tl1, tl2)
+
