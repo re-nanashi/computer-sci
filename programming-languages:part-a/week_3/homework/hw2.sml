@@ -109,3 +109,46 @@ fun officiate (card_list, move_list, goal) =
                                else loop(tail, rest, c::current_hand)
   in loop(card_list, move_list, [])
   end
+
+fun score_challenge (loc, goal) =
+  let val sum = sum_cards loc
+      fun best_score (loc, sum) =
+        case loc of
+             [] => 3 * (sum - goal)
+           | (_, Ace)::rest => 
+               if sum - 10 > goal
+               then best_score(rest, sum - 10)
+               else Int.min(goal - (sum - 10), 3 * (sum - goal))
+           | _::rest => best_score(rest, sum)
+  in (if sum >= goal then best_score(loc, sum) else (goal - sum)) div
+     (if all_same_color loc then 2 else 1)
+  end
+
+fun officiate_challenge (card_list, move_list, goal) =
+  let fun sum_cards_min cs= 
+        let fun min_card_val (suit, rank) = 
+              case rank of
+                   Ace => 1
+                 | Num x => x
+                 | _ => 10
+
+            fun sum_cards_min_aux (cs, sum) =
+              case cs of
+                   [] => sum
+                 | c1::cs' => sum_cards_min_aux(cs', sum + min_card_val c1)
+        in sum_cards_min_aux (cs, 0)
+        end
+
+      fun loop (deck, ml, current_hand) = 
+        case ml of
+             [] => current_hand
+           | (Discard c)::rest => 
+               loop(deck, rest, remove_card(current_hand, c, IllegalMove))
+           | Draw::rest => 
+               case deck of
+                    [] => current_hand
+                  | c::tail => if sum_cards_min(c::current_hand) > goal
+                               then c::current_hand
+                               else loop(tail, rest, c::current_hand)
+  in score_challenge(loop(card_list, move_list, []), goal)
+  end
