@@ -152,3 +152,29 @@ fun officiate_challenge (card_list, move_list, goal) =
                                else loop(tail, rest, c::current_hand)
   in score_challenge(loop(card_list, move_list, []), goal)
   end
+
+fun careful_player (card_list, goal) = 
+  let fun generate_careful_moves (deck, hand, moves) = 
+        let fun card_to_remove (cards, goal) = 
+              case cards of
+                   [] => NONE
+                 | (c::cs) => 
+                     if sum_cards(remove_card(cards, c, IllegalMove)) = goal
+                     then SOME c
+                     else card_to_remove(cs, goal - card_value(c))
+        in case deck of
+               [] => moves
+             | (c::cs) => 
+                 if goal - sum_cards(hand) > 10
+                 then generate_careful_moves(cs, c::hand, moves @ [Draw])
+                 else if goal = sum_cards(hand)
+                 then moves
+                 else case card_to_remove (c::hand, goal) of
+                           NONE => if sum_cards(c::hand) > goal then moves
+                                   else generate_careful_moves(cs, c::hand,
+                                   moves @ [Draw])
+                         | SOME c => moves @ [Discard c, Draw]
+        end
+  in 
+    generate_careful_moves (card_list, [], [])
+  end
