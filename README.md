@@ -19,6 +19,7 @@
 - VimScript 
 - Simple Bash scripts
 - Racket
+- SML/NJ
 
 
 ## Current Course
