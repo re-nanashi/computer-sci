@@ -44,6 +44,7 @@ fun has_passed {id = x, grade = y} =
 
 (* (listof final_grade) -> int*)
 (* given a list of final_grade, return the number of passing student *)
+
 fun number_passed lofg = 
   let fun number_passed_aux (lofg, count) = 
         case lofg of 
@@ -99,44 +100,8 @@ fun tree_height tree =
 
 (* int tree -> int *)
 (* produce the sum of all values of the tree *)
-fun sum_tree i_tree = 
+fun sum_tree i_tree =
   case i_tree of
-       Leaf => 0 
-     | Node {value=x,left=lt,right=rt} => 
-         x + sum_tree lt + sum_tree rt
-(*
-Situation assessment: 
-What is the situation: 
-  a syntax error: operator domain and operand does not match.
-                  operator is not recognized as a tree
-Root Cause Analysis: 
-Problem Solving:
-Risk Management:
- * *)
-
-exception Error
-
-fun sum_tree_a i_tree =
-  let fun filter_false(lst) =  
-        case lst of 
-             [] => []
-           | n::ns => 
-               case n of
-                    Leaf => filter_false(ns)
-                  | Node n => n :: filter_false(ns)
-
-    fun aux (tree, todo, sum) = 
-      case tree of 
-           Node {value=x,left=lt,right=rt} =>
-              aux2(filter_false([lt,rt]) @ todo, sum + x)
-         | _ => raise Error
-         
-    and aux2 (todo, sum) = 
-      case todo of 
-           [] => sum 
-         | (n1::rest) => aux(n1, rest, sum)
-  in aux(i_tree, [], 0)
-  end
-
-val test = sum_tree_a tr12 = 12
-val test1 = sum_tree_a tr10 = 29
+       Leaf => 0
+     | Node {value=x,left=lt,right=rt} =>
+         x + sum_tree(lt) + sum_tree(rt)
