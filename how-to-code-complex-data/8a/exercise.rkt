@@ -12,9 +12,15 @@
           (insert (first lon) 
                   (sort_lon (rest lon)))]))
 
-;; Number ListOfNumber -> ListOfNumber
+;; number listofnumber -> listofnumber
 ;; insert n in proper position in lon
-;; ASSUME: lon is sorted in increasing order
+;; assume: lon is sorted in increasing order
+(check-expect (insert 2 empty) (list 2))
+(check-expect (insert 2 (list 1 3)) (list 1 2 3))
+
+;; number listofnumber -> listofnumber
+;; insert n in proper position in lon
+;; assume: lon is sorted in increasing order
 (check-expect (insert 2 empty) (list 2))
 (check-expect (insert 2 (list 1 3)) (list 1 2 3))
 
