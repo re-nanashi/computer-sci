@@ -105,3 +105,39 @@ fun sum_tree i_tree =
        Leaf => 0
      | Node {value=x,left=lt,right=rt} =>
          x + sum_tree(lt) + sum_tree(rt)
+
+fun sum_n n =
+  if n = 1
+  then 1
+  else n + sum_n(n - 1)
+
+fun sum_n_1 n =
+  let fun aux (n, count) = 
+        case n of
+             1 => count
+           | n1 => aux(n1 - 1, count + n1)
+  in aux (n, 1)
+  end
+
+fun sum_list n =
+  if n = 0
+  then []
+  else sum_n(n) :: sum_list(n - 1) 
+    
+fun sum_list1 n =
+  let fun aux (n, acc) =
+        if n = 0
+        then acc
+        else aux(n - 1, sum_n(n)::acc)
+  in
+    aux(n, [])
+  end
+
+fun sum_list2 n =
+  let fun aux(n1, prev, acc) =
+        if n1 > n
+        then acc
+        else aux(n1 + 1, prev + n1, (prev + n1)::acc)
+  in 
+    aux(1, 0, [])
+  end
