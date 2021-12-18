@@ -17,6 +17,10 @@ fun number_in_month (dates : (int * int * int) list, month : int) =
   in number_in_month_helper(dates, 0)
   end
 
+fun number_in_month_fold (dates : (int * int * int) list, month : int) = 
+  foldl (fn ((y, m ,d), x) => 
+    case m = month of true => x + 1 | false => x) 0 dates
+
 fun number_in_months (dates : (int * int * int) list, months : int list) =
   let fun number_in_months_helper (months : int list, counter : int) =
         if null months
@@ -25,6 +29,9 @@ fun number_in_months (dates : (int * int * int) list, months : int list) =
           number_in_months_helper(tl months, counter + number_in_month(dates, hd months))
   in number_in_months_helper(months, 0)
   end
+
+fun number_in_months_fold (dates : (int * int * int) list, months : int list) = 
+  foldl (fn (x,y) => number_in_month_fold (dates, x) + y) 0 months
 
 fun rev xs =
   let fun rev_helper(xs, acc) =
@@ -45,6 +52,13 @@ fun dates_in_month (dates : (int * int * int) list, month : int) =
   in dates_in_month_helper(dates, [])
   end
 
+fun dates_in_month2 (dates : (int * int * int) list, month : int) =
+  List.filter (fn (y,m,d) => m = month) dates
+
+(*
+ *
+ * *)
+
 fun dates_in_months (dates : (int * int * int) list, months : int list) =
   let fun dates_in_months_helper (months : int list, 
     new_list : (int * int * int) list) =
@@ -54,6 +68,9 @@ fun dates_in_months (dates : (int * int * int) list, months : int list) =
           dates_in_months_helper(tl months, dates_in_month(dates, hd months) @ new_list)
   in dates_in_months_helper(months, [])
   end
+
+fun dates_in_months2 (dates : (int * int * int) list, months : int list) = 
+  foldl (fn (x,y) => y @ dates_in_month2(dates, x)) [] months
 
 fun get_nth (strings : string list, n : int) =
   if n = 1
