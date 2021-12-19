@@ -68,7 +68,7 @@ fun g f1 f2 p =
 
 val count_wildcards = g (fn _ => 1) (fn _ => 0) 
 
-val count_wild_and_variable_lengths = g (fn _ => 1) (fn n => String.size n)
+val count_wild_and_variable_lengths = g (fn _ => 1) String.size 
 
 fun count_some_var (str, p) = g (fn _ => 0) (fn n => if n = str then 1 else 0) p
 
@@ -90,22 +90,22 @@ fun check_pat p =
     in (no_duplicates o all_var_names) p
     end
 
-fun match (v, p) = 
-  case (v, p) of
+fun match (valu, ptrn) =  
+  case (valu, ptrn) of
        (_, Wildcard) => SOME []
      | (v, Variable s) => SOME [(s,v)]
      | (Unit, UnitP) => SOME []
-     | (Const n1, ConstP n2) => if n1 = n2 then SOME [] else NONE
-     | (Tuple vs, TupleP ps) => if length vs = length ps
-                                then all_answers match (ListPair.zip (vs, ps))
+     | (Const v, ConstP p) => if v = p then SOME [] else NONE
+     | (Tuple vs, TupleP ps) => if length vs = length ps 
+                                then all_answers match (ListPair.zip(vs, ps))
                                 else NONE
-     | (Constructor (s1,v), ConstructorP (s2, pn)) => if s1 = s2 
-                                                      then match(v,pn)
+     | (Constructor (s1,v), ConstructorP (s2,p)) => if s1 = s2 
+                                                      then match(v,p)
                                                       else NONE
      | _ => NONE
 
-fun first_match v ps =
-  SOME (first_answer (fn p => match (v, p)) ps)
+fun first_match v ps = 
+  SOME (first_answer (fn p => match(v, p)) ps)
   handle NoAnswer => NONE
 
 (**** for the challenge problem only ****)
@@ -115,3 +115,48 @@ datatype typ = Anything
 	     | IntT
 	     | TupleT of typ list
 	     | Datatype of string
+
+(* NOTE: There is a big chance this code is buggy af. *)
+fun typecheck_patterns (ts, ps) = 
+  let fun match_challenge (tp, ptrn) =
+        case (tp, ptrn) of
+             (_, Wildcard)       => SOME []
+           | ((_, _, t), Variable s)           => SOME[(s, t)]
+           | ((_, _, UnitT), UnitP)            => SOME []
+           | ((_, _, IntT), ConstP p)          => SOME []
+           | ((con, dt, TupleT ts), TupleP ps) => 
+               if length ts = length ps 
+               then all_answers match_challenge 
+                    (ListPair.zip((map (fn t => (con, dt, t)) ts), ps)) 
+               else NONE
+           | ((con,dt,t), ConstructorP (s, p)) => 
+               if con = s 
+               then match_challenge((con,dt,t), p) 
+               else NONE
+           | _ => NONE
+
+    fun count_anything t = 
+      let fun g f t = 
+            let val r = g f 
+            in case t of 
+                    Anything  => f () 
+                  | TupleT ts => List.foldl (fn (t,i) => (r t) + i) 0 ts 
+                  | _         => 0 
+            end
+      in g (fn _ => 1) t
+      end
+
+    fun most_lenient (t::ts) =
+      foldl (fn (x,y) => if count_anything x > count_anything y 
+                         then x 
+                         else y) t ts
+  in 
+    SOME (most_lenient 
+          (List.map (fn (_,_,t) => t) 
+          (List.filter (fn t => 
+           List.all (fn p => case match_challenge (t, p) of 
+                                  NONE => raise NoAnswer 
+                                | SOME i => true) ps) ts))) 
+    handle NoAnswer => NONE
+    
+  end
