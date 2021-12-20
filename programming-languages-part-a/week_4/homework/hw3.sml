@@ -4,21 +4,18 @@ exception NoAnswer
 
 (**** you can put all your code here ****)
 
-fun only_capitals str_list =
-  List.filter (fn s => Char.isUpper(String.sub(s, 0))) str_list
+val only_capitals = List.filter (fn s => Char.isUpper(String.sub(s, 0)))
 
-fun longest_string1 str_list = 
-  foldl (fn (x,y) => if String.size y < String.size x then x else y) "" str_list
+val longest_string1 = foldl (fn (x,y) => if String.size y < String.size x then x else y) ""
 
-fun longest_string2 str_list = 
-  foldl (fn (x,y) => if String.size x >= String.size y then x else y) "" str_list
+val longest_string2 = foldl (fn (x,y) => if String.size x >= String.size y then x else y) "" 
 
 val longest_string_helper : (int * int -> bool) -> string list -> string = 
   fn f => fn str_list => foldl (fn (x,y) => 
     case f(String.size x, String.size y) of true =>x | false => y)
       "" str_list
 
-val longest_string3 = longest_string_helper (fn (x,y) => y < x) 
+val longest_string3 = longest_string_helper (fn (x,y) => x > y) 
 
 val longest_string4 = longest_string_helper (fn (x,y) => x >= y) 
 
@@ -117,46 +114,38 @@ datatype typ = Anything
 	     | Datatype of string
 
 (* NOTE: There is a big chance this code is buggy af. *)
-fun typecheck_patterns (ts, ps) = 
-  let fun match_challenge (tp, ptrn) =
-        case (tp, ptrn) of
-             (_, Wildcard)       => SOME []
-           | ((_, _, t), Variable s)           => SOME[(s, t)]
-           | ((_, _, UnitT), UnitP)            => SOME []
-           | ((_, _, IntT), ConstP p)          => SOME []
-           | ((con, dt, TupleT ts), TupleP ps) => 
-               if length ts = length ps 
-               then all_answers match_challenge 
-                    (ListPair.zip((map (fn t => (con, dt, t)) ts), ps)) 
-               else NONE
-           | ((con,dt,t), ConstructorP (s, p)) => 
-               if con = s 
-               then match_challenge((con,dt,t), p) 
-               else NONE
-           | _ => NONE
+fun typecheck_patterns (dts, ps) = 
+  let fun infer_type p = 
+        case p of 
+             UnitP => UnitT 
+           | ConstP i => IntT 
+           | TupleP ps => 
+               TupleT (List.map (fn p => infer_type p) ps) 
+           | ConstructorP(s1, p1) => 
+               let val p1_type = infer_type p1 
+                   fun verify_datatype (cn,dn,t) = 
+                     s1 = cn andalso t = p1_type
+               in case List.find verify_datatype dts of 
+                       NONE => raise NoAnswer 
+                     | SOME (c,d,t) => Datatype d
+               end 
+           | _ => Anything 
 
-    fun count_anything t = 
-      let fun g f t = 
-            let val r = g f 
-            in case t of 
-                    Anything  => f () 
-                  | TupleT ts => List.foldl (fn (t,i) => (r t) + i) 0 ts 
-                  | _         => 0 
-            end
-      in g (fn _ => 1) t
-      end
-
-    fun most_lenient (t::ts) =
-      foldl (fn (x,y) => if count_anything x > count_anything y 
-                         then x 
-                         else y) t ts
-  in 
-    SOME (most_lenient 
-          (List.map (fn (_,_,t) => t) 
-          (List.filter (fn t => 
-           List.all (fn p => case match_challenge (t, p) of 
-                                  NONE => raise NoAnswer 
-                                | SOME i => true) ps) ts))) 
+      fun more_lenient_type (t1, t2) =  
+        case (t1, t2) of
+             (Anything, t2) => t2
+           | (t1, Anything) => t1
+           | (IntT,   IntT) => IntT
+           | (UnitT, UnitT) => UnitT
+           | (TupleT ts1, TupleT ts2) => 
+               if length ts1 = length ts2
+               then TupleT (List.map more_lenient_type (ListPair.zip (ts1, ts2)))
+               else raise NoAnswer
+           | (Datatype dt1, Datatype dt2) => if dt1 = dt2
+                                             then t1
+                                             else raise NoAnswer
+           | (_, _) => raise NoAnswer
+  in
+    SOME (List.foldl (fn (t, acc) => more_lenient_type (t, acc)) Anything (List.map infer_type ps))
     handle NoAnswer => NONE
-    
   end
