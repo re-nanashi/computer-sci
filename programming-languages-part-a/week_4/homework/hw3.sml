@@ -6,14 +6,14 @@ exception NoAnswer
 
 val only_capitals = List.filter (fn s => Char.isUpper(String.sub(s, 0)))
 
-val longest_string1 = foldl (fn (x,y) => if String.size y < String.size x then x else y) ""
+val longest_string1 = foldl (fn (x,y) => if String.size x > String.size y then x else y) ""
 
 val longest_string2 = foldl (fn (x,y) => if String.size x >= String.size y then x else y) "" 
 
 val longest_string_helper : (int * int -> bool) -> string list -> string = 
   fn f => fn str_list => foldl (fn (x,y) => 
     case f(String.size x, String.size y) of true =>x | false => y)
-      "" str_list
+    "" str_list
 
 val longest_string3 = longest_string_helper (fn (x,y) => x > y) 
 
@@ -113,31 +113,30 @@ datatype typ = Anything
 	     | TupleT of typ list
 	     | Datatype of string
 
-(* NOTE: There is a big chance this code is buggy af. *)
 fun typecheck_patterns (dts, ps) = 
   let fun infer_type p = 
         case p of 
              UnitP => UnitT 
            | ConstP i => IntT 
-           | TupleP ps => 
-               TupleT (List.map (fn p => infer_type p) ps) 
+           | TupleP ps => TupleT (List.map (fn p => infer_type p) ps) 
            | ConstructorP(s1, p1) => 
                let val p1_type = infer_type p1 
                    fun verify_datatype (cn,dn,t) = 
-                     s1 = cn andalso t = p1_type
+                     s1 = cn andalso 
+                     (t = p1_type orelse p1_type = Anything) 
                in case List.find verify_datatype dts of 
                        NONE => raise NoAnswer 
                      | SOME (c,d,t) => Datatype d
                end 
            | _ => Anything 
 
-      fun more_lenient_type (t1, t2) =  
+      fun more_lenient_type (t1, t2) =
         case (t1, t2) of
              (Anything, t2) => t2
            | (t1, Anything) => t1
            | (IntT,   IntT) => IntT
            | (UnitT, UnitT) => UnitT
-           | (TupleT ts1, TupleT ts2) => 
+           | (TupleT ts1, TupleT ts2) =>
                if length ts1 = length ts2
                then TupleT (List.map more_lenient_type (ListPair.zip (ts1, ts2)))
                else raise NoAnswer
@@ -146,6 +145,9 @@ fun typecheck_patterns (dts, ps) =
                                              else raise NoAnswer
            | (_, _) => raise NoAnswer
   in
-    SOME (List.foldl (fn (t, acc) => more_lenient_type (t, acc)) Anything (List.map infer_type ps))
-    handle NoAnswer => NONE
+    case (dts, ps) of
+         ([],[])    => NONE
+       | (dts, ps)  => SOME (List.foldl (fn (t, acc) => more_lenient_type (t, acc)) 
+                                         Anything (List.map infer_type ps)) 
+                       handle NoAnswer => NONE
   end
