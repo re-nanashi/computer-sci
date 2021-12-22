@@ -1,6 +1,6 @@
 (* Idiom: Function Composition: Combining functions *)
 
-(* ('b -> 'a) * ('b -> 'a) -> ('a -> 'c) *)
+(* ('b -> 'c) * ('a -> 'b) -> ('a -> 'c) *)
 fun compose(f, g) = fn x => f(g(x))
 
 (* int -> real *)
@@ -9,7 +9,7 @@ fun sqrt_of_abs i = Math.sqrt(Real.fromInt(abs(i)))
 fun sqrt_of_abs i = (Math.sqrt o Real.fromInt o abs)(i)
 
 (* right -> left*)
-fun sqrt_of_abs = Math.sqrt o Real.fromInt o abs
+val sqrt_of_abs = Math.sqrt o Real.fromInt o abs
 
 (* |> !>*)
 infix !>
