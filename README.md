@@ -14,7 +14,8 @@
 - C++ Syntax
 - JavaScript 
 - Beginner Typescript 
-- HTML/CSS
+- HTML
+- CSS
 - NodeJS
 - VimScript 
 - Simple Bash scripts
