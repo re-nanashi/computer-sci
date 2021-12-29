@@ -24,13 +24,14 @@
 
 
 ## Current Course
+- Programming Languages: Part B
 
-- Programming Languages: Part A
 
 ## Finished Courses
 
 - How to code: Simple Data
 - How to code: Complex Data
+- Programming Languages: Part A
 
 ## Note
 
