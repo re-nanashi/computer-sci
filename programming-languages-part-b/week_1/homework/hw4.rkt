@@ -39,22 +39,21 @@
     (lambda () (f s))))
 
 (define (cycle-lists xs ys)
-  (letrec ([lx (length xs)]
-           [ly (length ys)]
-           [f (lambda (x y) (cons (cons (list-nth-mod xs (remainder x lx)) 
-                                        (list-nth-mod ys (remainder y ly))) 
-                                  (lambda () (f (+ x 1) (+ y 1)))))])
-    (lambda () (f 0 0))))
+  (letrec ([f (lambda (x) (cons (cons (list-nth-mod xs x) 
+                                      (list-nth-mod ys x)) 
+                                  (lambda () (f (+ x 1)))))])
+    (lambda () (f 0))))
 
-(define (vector-assoc v vec) 
+(define (vector-assoc v vec)
   (letrec ([vl (vector-length vec)]
            [f (lambda (x)
-                (cond [(equal? vl x) false]
-                      [(let ([e (vector-ref vec x)]) 
-                         (and (pair? e) 
-                              (equal? v (car e))))
-                       (vector-ref vec x)]
-                      [else (f (add1 x))]))]) 
+                (if (equal? vl x) 
+                  false
+                  (let ([e (vector-ref vec x)])
+                    (if (and (pair? e) 
+                             (equal? (car e) v)) 
+                      e 
+                      (f (add1 x))))))]) 
     (f 0)))
 
 (define (cached-assoc xs n)
@@ -66,8 +65,8 @@
                     ans
                     (let ([new-ans (assoc x xs)])
                      (begin 
-                      (set! itr (if (equal? itr n) 0 (add1 itr)))
-                      (vector-set! cache itr new-ans)
+                       (vector-set! cache itr new-ans) 
+                       (set! itr (if (equal? (add1 itr) n) 0 (add1 itr)))
                       new-ans)))))])
     f))
 
@@ -76,7 +75,8 @@
     [(while-less e1 do e2)
      (let ([x e1])
        (letrec ([f (lambda () 
-                     (if (equal? x e2) 
-                       #t 
-                       (begin e2 (f))))])
+                     (let ([y e2]) 
+                       (if (or (not (number? y)) (>= y x)) 
+                         #t 
+                         (f))))])
          (f)))]))
