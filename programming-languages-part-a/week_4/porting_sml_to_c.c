@@ -11,7 +11,7 @@ struct List {
     list_t *tail;
 };
 
-list_t *make_list (void *x, list_t *xs) {
+list_t *make_list(void *x, list_t *xs) {
     list_t *ans = (list_t *)malloc(sizeof(list_t));
     ans->head = x;
     ans->tail = xs;
