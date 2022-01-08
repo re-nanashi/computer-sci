@@ -130,12 +130,19 @@
                     (ifgreater (var "_y") (var "_x") e4 e3))))
 
 ;; Problem 4
-
-(define mupl-map "CHANGE")
+(define mupl-map
+  (fun #f "mupl-map"
+       (fun "map" "list"
+            (ifaunit (var "list")
+                     (aunit)
+                     (apair (call (var "mupl-map") (fst (var "list")))
+                            (call (var "map") (snd (var "list"))))))))
 
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+        (fun #f "i"
+             (call (var "map")
+                   (fun #f "x" (add (var "i") (var "x")))))))
 
 ;; Challenge Problem
 
