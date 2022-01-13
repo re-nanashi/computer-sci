@@ -2,7 +2,6 @@
 # Section 7: A Longer Example
 
 class MyRational
-
   def initialize(num,den=1) # second argument has a default
     if den == 0
       raise "MyRational received an inappropriate argument"
