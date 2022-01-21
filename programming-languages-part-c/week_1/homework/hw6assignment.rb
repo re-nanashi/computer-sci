@@ -6,20 +6,26 @@ require_relative './hw6graphics.rb'
 
 class MyPiece < Piece
   # The constant All_My_Pieces should be declared here
-  All_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
-               rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
+  All_My_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
                [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
                [[0, 0], [0, -1], [0, 1], [0, 2]]],
                [[[0, 0], [-1, 0], [1, 0], [2, 0], [3, 0]], # super long (only needs two)
                [[0, 0], [0, -1], [0, 1], [0, 2], [0, 3]]],
+               rotations([[0, 0], [-1, 0], [0, -1]]),
                rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
+               rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
                rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
                rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
-               rotations([[0, 0], [1, 0], [0, -1], [-1, -1]])] # Z
+               rotations([[0, 0], [1, 0], [0, -1], [-1, -1]]), # Z
+               rotations([[0, 0], [-1, 0], [1, 0], [0, -1], [1,-1]])] 
 
   # your enhancements here
-  def self.next_piece (board)
-    MyPiece.new(All_Pieces.sample, board)
+  def self.next_piece (board, cheat_active=false)
+    if cheat_active 
+      MyPiece.new([[0,0]], board)
+    else
+      MyPiece.new(All_My_Pieces.sample, board)
+    end
   end
 end
 
@@ -28,6 +34,7 @@ class MyBoard < Board
   def initialize (game)
     super(game)
     @current_block = MyPiece.next_piece(self)
+    @active_cheats = 0
   end
 
   def rotate_180_degrees
@@ -38,7 +45,12 @@ class MyBoard < Board
   end
 
   def next_piece 
-    @current_block = MyPiece.next_piece(self)
+    if @active_cheatscheat != 0 
+      @current_block = MyPiece.next_piece(self, true)
+      @cheat -= 1
+    else
+      @current_block = MyPiece.next_piece(self)
+    end
     @current_pos = nil
   end
 
@@ -54,6 +66,13 @@ class MyBoard < Board
     remove_filled
     @delay = [@delay - 2, 80].max
   end
+
+  def cheat
+    if score > 100 
+      @active_cheats += 1
+      @score -= 100 
+    end
+  end
 end
 
 class MyTetris < Tetris
@@ -66,9 +85,10 @@ class MyTetris < Tetris
     @board.draw
   end
 
+  # override: add u key binding 
   def key_bindings
     @root.bind('u', proc {@board.rotate_180_degrees})
+    @root.bind('c', proc {@board.cheat})
     super
   end
-
 end
