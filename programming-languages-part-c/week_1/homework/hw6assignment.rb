@@ -45,9 +45,9 @@ class MyBoard < Board
   end
 
   def next_piece 
-    if @active_cheatscheat != 0 
+    if @active_cheats != 0 
       @current_block = MyPiece.next_piece(self, true)
-      @cheat -= 1
+      @active_cheats -= 1
     else
       @current_block = MyPiece.next_piece(self)
     end
