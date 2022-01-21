@@ -2,27 +2,26 @@
 
 # This is the only file you turn in, so do not modify the other files as
 # part of your solution.
-require_relative './hw6graphics.rb'
 
 class MyPiece < Piece
   # The constant All_My_Pieces should be declared here
   All_My_Pieces = [[[[0, 0], [1, 0], [0, 1], [1, 1]]],  # square (only needs one)
-               [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
-               [[0, 0], [0, -1], [0, 1], [0, 2]]],
-               [[[0, 0], [-1, 0], [1, 0], [2, 0], [3, 0]], # super long (only needs two)
-               [[0, 0], [0, -1], [0, 1], [0, 2], [0, 3]]],
-               rotations([[0, 0], [-1, 0], [0, -1]]),
-               rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
-               rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
-               rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
-               rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
-               rotations([[0, 0], [1, 0], [0, -1], [-1, -1]]), # Z
-               rotations([[0, 0], [-1, 0], [1, 0], [0, -1], [1,-1]])] 
+                  rotations([[0, 0], [-1, 0], [1, 0], [0, -1]]), # T
+                  [[[0, 0], [-1, 0], [1, 0], [2, 0]], # long (only needs two)
+                  [[0, 0], [0, -1], [0, 1], [0, 2]]],
+                  rotations([[0, 0], [0, -1], [0, 1], [1, 1]]), # L
+                  rotations([[0, 0], [0, -1], [0, 1], [-1, 1]]), # inverted L
+                  rotations([[0, 0], [-1, 0], [0, -1], [1, -1]]), # S
+                  rotations([[0, 0], [1, 0], [0, -1], [-1, -1]]), # Z
+                  rotations([[0, 0], [-1, 0], [1, 0], [0, 1], [-1, 1]]),
+                  [[[0, 0], [-1, 0], [1, 0], [2, 0], [3, 0]],
+                  [[0, 0], [0, -1], [0, 1], [0, 2], [0, 3]]],
+                  rotations([[0, 0], [-1, 0], [0, -1]])]
 
   # your enhancements here
   def self.next_piece (board, cheat_active=false)
     if cheat_active 
-      MyPiece.new([[0,0]], board)
+      MyPiece.new([[[0,0]]], board)
     else
       MyPiece.new(All_My_Pieces.sample, board)
     end
@@ -34,7 +33,7 @@ class MyBoard < Board
   def initialize (game)
     super(game)
     @current_block = MyPiece.next_piece(self)
-    @active_cheats = 0
+    @cheat_active = false
   end
 
   def rotate_180_degrees
@@ -45,9 +44,9 @@ class MyBoard < Board
   end
 
   def next_piece 
-    if @active_cheats != 0 
+    if cheat_is_active 
       @current_block = MyPiece.next_piece(self, true)
-      @active_cheats -= 1
+      @cheat_active = false
     else
       @current_block = MyPiece.next_piece(self)
     end
@@ -67,9 +66,13 @@ class MyBoard < Board
     @delay = [@delay - 2, 80].max
   end
 
+  def cheat_is_active
+    @cheat_active
+  end
+
   def cheat
-    if score > 100 
-      @active_cheats += 1
+    if score >= 100 && !cheat_is_active
+      @cheat_active = true
       @score -= 100 
     end
   end
@@ -85,7 +88,8 @@ class MyTetris < Tetris
     @board.draw
   end
 
-  # override: add u key binding 
+  # override: add u key binding; rotate 180
+  # add c key binding; cheat
   def key_bindings
     @root.bind('u', proc {@board.rotate_180_degrees})
     @root.bind('c', proc {@board.cheat})
