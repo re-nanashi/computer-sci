@@ -1,40 +1,12 @@
 # University of Washington, Programming Languages, Homework 7, hw7.rb 
-# (See also ML code)
 
-# a little language for 2D geometry objects
-
-# each subclass of GeometryExpression, including subclasses of GeometryValue,
-#  needs to respond to messages preprocess_prog and eval_prog
-#
-# each subclass of GeometryValue additionally needs:
-#   * shift
-#   * intersect, which uses the double-dispatch pattern
-#   * intersectPoint, intersectLine, and intersectVerticalLine for 
-#       for being called by intersect of appropriate clases and doing
-#       the correct intersection calculuation
-#   * (We would need intersectNoPoints and intersectLineSegment, but these
-#      are provided by GeometryValue and should not be overridden.)
-#   *  intersectWithSegmentAsLineResult, which is used by 
-#      intersectLineSegment as described in the assignment
-#
-# you can define other helper methods, but will not find much need to
-
-# Note: geometry objects should be immutable: assign to fields only during
-#       object construction
-
-# Note: For eval_prog, represent environments as arrays of 2-element arrays
-# as described in the assignment
 class GeometryExpression  
-  # do *not* change this class definition
   Epsilon = 0.00001
 end
 
 class GeometryValue 
-  # do *not* change methods in this class definition
-  # you can add methods if you wish
-
   private
-  # some helper methods that may be generally useful
+  # helper methods 
   def real_close(r1,r2) 
     (r1 - r2).abs < GeometryExpression::Epsilon
   end
@@ -55,16 +27,19 @@ class GeometryValue
   end
 
   public
+  # all values evaluate to self
   def eval_prog env 
-    self # all values evaluate to self
+    self 
   end
 
+  # no pre-processing to do here
   def preprocess_prog
-    self # no pre-processing to do here
+    self
   end
 
+  # shifting no-points is no-points
   def shift(dx,dy)
-    self # shifting no-points is no-points
+    self 
   end
 
   # we put this in this class so all subclasses can inherit it:
@@ -73,7 +48,6 @@ class GeometryValue
     np # could also have NoPoints.new here instead
   end
 
-  # we put this in this class so all subclasses can inhert it:
   # the intersection of self with a LineSegment is computed by
   # first intersecting with the line containing the segment and then
   # calling the result's intersectWithSegmentAsLineResult with the segment
@@ -84,25 +58,25 @@ class GeometryValue
 end
 
 class NoPoints < GeometryValue
-  # do *not* change this class definition: everything is done for you
-  # (although this is the easiest class, it shows what methods every subclass
-  # of geometry values needs)
-  # However, you *may* move methods from here to a superclass if you wish to
   # Note: no initialize method only because there is nothing it needs to do
   def intersect other
-    other.intersectNoPoints self # will be NoPoints but follow double-dispatch
+    # will be NoPoints but follow double-dispatch
+    other.intersectNoPoints self 
   end
 
+  # intersection with point and no-points is no-points
   def intersectPoint p
-    self # intersection with point and no-points is no-points
+    self 
   end
 
+  # intersection with line and no-points is no-points
   def intersectLine line
-    self # intersection with line and no-points is no-points
+    self 
   end
 
+  # intersection with line and no-points is no-points
   def intersectVerticalLine vline
-    self # intersection with line and no-points is no-points
+    self 
   end
 
   # if self is the intersection of (1) some shape s and (2) 
@@ -114,11 +88,6 @@ class NoPoints < GeometryValue
 end
 
 class Point < GeometryValue
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
-
-  # Note: You may want a private helper method like the local
-  # helper function inbetween in the ML code
   attr_reader :x, :y
   def initialize(x,y)
     @x = x
@@ -175,8 +144,6 @@ class Point < GeometryValue
 end
 
 class Line < GeometryValue
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
   attr_reader :m, :b 
   def initialize(m,b)
     @m = m
@@ -221,8 +188,6 @@ class Line < GeometryValue
 end
 
 class VerticalLine < GeometryValue
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
   attr_reader :x
   def initialize x
     @x = x
@@ -259,11 +224,6 @@ class VerticalLine < GeometryValue
 end
 
 class LineSegment < GeometryValue
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
-  # Note: This is the most difficult class.  In the sample solution,
-  # preprocess_prog is about 15 lines long and 
-  # intersectWithSegmentAsLineResult is about 40 lines long
   attr_reader :x1, :y1, :x2, :y2
   def initialize (x1,y1,x2,y2)
     @x1 = x1
@@ -337,11 +297,7 @@ class LineSegment < GeometryValue
   end
 end
 
-# Note: there is no need for getter methods for the non-value classes
-
 class Intersect < GeometryExpression
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
   def initialize(e1,e2)
     @e1 = e1
     @e2 = e2
@@ -359,9 +315,6 @@ class Intersect < GeometryExpression
 end
 
 class Let < GeometryExpression
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
-  # Note: Look at Var to guide how you implement Let
   def initialize(s,e1,e2)
     @s = s
     @e1 = e1
@@ -382,13 +335,11 @@ class Let < GeometryExpression
 end
 
 class Var < GeometryExpression
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
   def initialize s
     @s = s
   end
 
-  def eval_prog env # remember: do not change this method
+  def eval_prog env 
     pr = env.assoc @s
     raise "undefined variable" if pr.nil?
     pr[1]
@@ -400,8 +351,6 @@ class Var < GeometryExpression
 end
 
 class Shift < GeometryExpression
-  # *add* methods to this class -- do *not* change given code and do not
-  # override any methods
   def initialize(dx,dy,e)
     @dx = dx
     @dy = dy
