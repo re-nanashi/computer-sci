@@ -24,7 +24,7 @@
 
 
 ## Current Course
-- Programming Languages: Part C
+- Object-Oriented Design
 
 ## Finished Courses
 
@@ -32,6 +32,7 @@
 - How to code: Complex Data
 - Programming Languages: Part A
 - Programming Languages: Part B
+- Programming Languages: Part C
 
 ## Note
 
