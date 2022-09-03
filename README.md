@@ -1,6 +1,6 @@
 # Computer Science Journey Repository
 
-## What is it for ?
+## What is it for?
 
 ✅ Serves as a repository for ossu's core programming courses.
 
@@ -32,9 +32,9 @@ The Programming Languages: Part A-C source code was moved to a separate repo.
 
 - How to code: Simple Data
 - How to code: Complex Data
-- Programming Languages: Part A
-- Programming Languages: Part B
-- Programming Languages: Part C
+- Programming Languages: Part A - https://github.com/re-nanashi/programming-languages-part-a
+- Programming Languages: Part B - https://github.com/re-nanashi/programming-languages-part-b
+- Programming Languages: Part C - https://github.com/re-nanashi/programming-languages-part-c
 
 ## Note
 
