@@ -8,6 +8,8 @@
 
 ✅ Could also be used as reference for all the code that I have encountered.
 
+NOTE:
+The Programming Languages: Part A-C source code was moved to a separate repo.
 
 ## Things that I have learned and currently learning:
 
