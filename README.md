@@ -42,5 +42,4 @@ The Programming Languages: Part A-C source code was moved to a separate repo.
 
 ## Author
 
-John Reymar I. Fabro(Me)
 [@juanfab.af](https://www.instagram.com/juanfab.af/)
